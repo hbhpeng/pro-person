@@ -267,7 +267,7 @@ async function onRegenerate(index: number) {
                 requestOptions: { prompt: message, options: { ...options } },
               },
             )
-
+            // 判断openLongReply是否为空
             if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
               options.parentMessageId = data.id
               lastText = data.text
@@ -527,7 +527,7 @@ onUnmounted(() => {
             </span>
           </HoverButton>
           <HoverButton v-if="!isMobile" @click="toggleUsingContext">
-            <span class="text-xl" :class="{ 'text-[#4b9e5f]': usingContext, 'text-[#a8071a]': !usingContext }">
+            <span class="text-xl" :class="{ 'text-[#6aa1e7]': usingContext, 'text-[#a8071a]': !usingContext }">
               <SvgIcon icon="ri:chat-history-line" />
             </span>
           </HoverButton>

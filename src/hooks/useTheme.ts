@@ -20,12 +20,34 @@ export function useTheme() {
   })
 
   const themeOverrides = computed<GlobalThemeOverrides>(() => {
-    if (isDark.value) {
-      return {
-        common: {},
-      }
+    return {
+      common: {
+        // primaryColor: '#6AA1E7'
+        primaryColorHover: '#6AA1E7',
+        primaryColorPressed: '#6AA1E7',
+        textColor: '#6AA1E7',
+      },
+      Button: {
+        color: '#FFFFFF',
+        colorPrimary: '#6AA1E7',
+        colorDisabledPrimary: '#6AA1E7',
+        colorFocusPrimary: '#6AA1E7',
+        textColorTextPrimary: '#6AA1E7',
+      },
+      Pagination: {
+        itemTextColorActive: '#6AA1E7',
+        itemBorderActive: '1px solid #6AA1E7',
+      },
+      Slider: {
+        fillColor: '#6AA1E7',
+        fillColorHover: '#6AA1E7',
+      },
+      Tabs: {
+        tabTextColorActiveLine: '#6AA1E7',
+        tabTextColorHoverLine: '#6AA1E7',
+        barColor: '#6AA1E7',
+      },
     }
-    return {}
   })
 
   watch(

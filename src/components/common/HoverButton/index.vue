@@ -14,7 +14,7 @@ interface Emit {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  tooltip: '',
+  tooltip: '设置',
   placement: 'bottom',
 })
 
