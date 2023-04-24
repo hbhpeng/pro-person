@@ -6,9 +6,11 @@ import { auth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
 import {addPasswordToFile, isPasswordInFile, removePasswordFromFile} from './utils/store'
+import {compareTime} from './utils/dateAuth'
 
 const app = express()
 const router = express.Router()
+let isExpire = false
 
 app.use(express.static('public'))
 app.use(express.json())
@@ -25,6 +27,9 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
 
   try {
     const { prompt, options = {}, systemMessage, temperature, top_p, password } = req.body as RequestProps
+		if (isExpire) {
+			throw new Error('服务时间已过期，请续费')
+		}
 		if (!password) {
 		  throw new Error('用户未认证，请在设置中填写正确的用户密码')
 		}
@@ -94,6 +99,8 @@ router.post('/removePasswd', auth, async (req, res) => {
 
 router.post('/session', async (req, res) => {
   try {
+		const EXPIRE_DATE_TIME = process.env.EXPIRE_DATE_TIME
+		isExpire = await compareTime(EXPIRE_DATE_TIME)
     const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
     const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
     res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel() } })

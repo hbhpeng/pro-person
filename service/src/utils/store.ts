@@ -36,7 +36,7 @@ function loadPasswordFile() {
 
 // 添加密码到文件
 export function addPasswordToFile(password: string) {
-	global.console.log(password)
+	// global.console.log(password)
   fs.appendFileSync(filePath, password + '\n');
   passwordCache.add(password);
 }
