@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { NModal, NTabPane, NTabs } from 'naive-ui'
 import General from './General.vue'
 import Advanced from './Advanced.vue'
+import Password from './Password.vue'
 import { useAuthStore } from '@/store'
 import { SvgIcon } from '@/components/common'
 
@@ -56,6 +57,16 @@ const show = computed({
             <Advanced />
           </div>
         </NTabPane>
+
+				<NTabPane name="Password" tab="Password">
+				  <template #tab>
+				    <SvgIcon class="text-lg" icon="solar:lock-password-outline" />
+				    <span class="ml-2">{{ $t('setting.password') }}</span>
+				  </template>
+				  <div class="min-h-[100px]">
+				    <Password />
+				  </div>
+				</NTabPane>
         <!--        <NTabPane name="Config" tab="Config">
           <template #tab>
             <SvgIcon class="text-lg" icon="ri:list-settings-line" />

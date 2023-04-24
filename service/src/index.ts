@@ -5,6 +5,7 @@ import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
 import { auth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
+import {addPasswordToFile, isPasswordInFile, removePasswordFromFile} from './utils/store'
 
 const app = express()
 const router = express.Router()
@@ -23,7 +24,13 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
   res.setHeader('Content-type', 'application/octet-stream')
 
   try {
-    const { prompt, options = {}, systemMessage, temperature, top_p } = req.body as RequestProps
+    const { prompt, options = {}, systemMessage, temperature, top_p, password } = req.body as RequestProps
+		if (!password) {
+		  throw new Error('用户未认证，请在设置中填写正确的用户密码')
+		}
+		if (password !== process.env.OPENAI_ADMAIN_TOKEN && !isPasswordInFile(password)) {
+			throw new Error('用户未认证，请在设置中填写正确的用户密码')
+		}
     let firstChunk = true
     await chatReplyProcess({
       message: prompt,
@@ -38,7 +45,7 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
     })
   }
   catch (error) {
-    res.write(JSON.stringify(error))
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
   }
   finally {
     res.end()
@@ -52,6 +59,36 @@ router.post('/config', auth, async (req, res) => {
   }
   catch (error) {
     res.send(error)
+  }
+})
+
+router.post('/addPasswd', auth, async (req, res) => {
+  try {
+    const { token, admin } = req.body as { token: string, admin: string }
+		if (!admin || admin !== process.env.OPENAI_ADMAIN_TOKEN) {
+			res.send({ status: 'Fail', message: '您没有权限', data: null })
+			return
+		}
+		addPasswordToFile(token)
+    res.send({ status: 'Success', message: '添加成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: error.message, data: null })
+  }
+})
+
+router.post('/removePasswd', auth, async (req, res) => {
+  try {
+    const { token, admin } = req.body as { token: string, admin: string }
+		if (!admin || admin !== process.env.OPENAI_ADMAIN_TOKEN) {
+			res.send({ status: 'Fail', message: '您没有权限', data: null })
+			return
+		}
+  	removePasswordFromFile(token)
+    res.send({ status: 'Success', message: '删除成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: error.message, data: null })
   }
 })
 

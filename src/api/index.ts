@@ -41,6 +41,7 @@ export function fetchChatAPIProcess<T = any>(
       systemMessage: settingStore.systemMessage,
       temperature: settingStore.temperature,
       top_p: settingStore.top_p,
+			password: settingStore.password
     }
   }
 
@@ -62,5 +63,19 @@ export function fetchVerify<T>(token: string) {
   return post<T>({
     url: '/verify',
     data: { token },
+  })
+}
+
+export function addPassword<T>(token: string, admin: string) {
+  return post<T>({
+    url: '/addPasswd',
+    data: { token, admin},
+  })
+}
+
+export function removePassword<T>(token: string, admin: string) {
+  return post<T>({
+    url: '/removePasswd',
+    data: { token, admin},
   })
 }

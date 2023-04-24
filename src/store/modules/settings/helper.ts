@@ -6,6 +6,7 @@ export interface SettingsState {
   systemMessage: string
   temperature: number
   top_p: number
+	password?: string
 }
 
 export function defaultSetting(): SettingsState {
