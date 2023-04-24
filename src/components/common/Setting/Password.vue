@@ -6,7 +6,6 @@ import type { SettingsState } from '@/store/modules/settings/helper'
 import { t } from '@/locales'
 // import post from '@/utils/request'
 import { addPassword, removePassword } from '@/api'
-import { error } from 'console'
 
 const settingStore = useSettingStore()
 
