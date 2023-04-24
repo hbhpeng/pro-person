@@ -3,13 +3,13 @@ import { computed } from 'vue'
 import { NButton, NPopconfirm, NSelect, useMessage } from 'naive-ui'
 import type { Language, Theme } from '@/store/modules/app/helper'
 import { SvgIcon } from '@/components/common'
-import { useAppStore, useUserStore } from '@/store'
+import { useAppStore } from '@/store'
 import { getCurrentDate } from '@/utils/functions'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 
 const appStore = useAppStore()
-const userStore = useUserStore()
+// const userStore = useUserStore()
 
 const { isMobile } = useBasicLayout()
 
@@ -17,7 +17,7 @@ const ms = useMessage()
 
 const theme = computed(() => appStore.theme)
 
-const userInfo = computed(() => userStore.userInfo)
+// const userInfo = computed(() => userStore.userInfo)
 
 // const avatar = ref(userInfo.value.avatar ?? '')
 
@@ -64,11 +64,11 @@ const languageOptions: { label: string; key: Language; value: Language }[] = [
 //   ms.success(t('common.success'))
 // }
 
-function handleReset() {
-  userStore.resetUserInfo()
-  ms.success(t('common.success'))
-  window.location.reload()
-}
+// function handleReset() {
+//   userStore.resetUserInfo()
+//   ms.success(t('common.success'))
+//   window.location.reload()
+// }
 
 function exportData(): void {
   const date = getCurrentDate()
