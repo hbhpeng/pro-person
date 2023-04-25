@@ -58,15 +58,15 @@ const show = computed({
           </div>
         </NTabPane>
 
-				<NTabPane name="Password" tab="Password">
-				  <template #tab>
-				    <SvgIcon class="text-lg" icon="solar:lock-password-outline" />
-				    <span class="ml-2">{{ $t('setting.password') }}</span>
-				  </template>
-				  <div class="min-h-[100px]">
-				    <Password />
-				  </div>
-				</NTabPane>
+        <NTabPane name="Password" tab="Password">
+          <template #tab>
+            <SvgIcon class="text-lg" icon="solar:lock-password-outline" />
+            <span class="ml-2">{{ $t('setting.password') }}</span>
+          </template>
+          <div class="min-h-[100px]">
+            <Password />
+          </div>
+        </NTabPane>
         <!--        <NTabPane name="Config" tab="Config">
           <template #tab>
             <SvgIcon class="text-lg" icon="ri:list-settings-line" />

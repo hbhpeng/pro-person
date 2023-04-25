@@ -26,9 +26,15 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
-    path: '/500',
-    name: '500',
-    component: () => import('@/views/exception/500/index.vue'),
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/views/admin/login/index.vue'),
+  },
+
+  {
+    path: '/user',
+    name: 'user',
+    component: () => import('@/views/admin/userInfo/index.vue'),
   },
 
   {

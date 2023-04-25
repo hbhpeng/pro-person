@@ -5,8 +5,8 @@ import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
 import { auth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
-import {addPasswordToFile, isPasswordInFile, removePasswordFromFile} from './utils/store'
-import {compareTime} from './utils/dateAuth'
+import { addPasswordToFile, isPasswordInFile, removePasswordFromFile } from './utils/store'
+import { compareTime } from './utils/dateAuth'
 
 const app = express()
 const router = express.Router()
@@ -27,15 +27,15 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
 
   try {
     const { prompt, options = {}, systemMessage, temperature, top_p, password } = req.body as RequestProps
-		if (isExpire) {
-			throw new Error('服务时间已过期，请续费')
-		}
-		if (!password) {
-		  throw new Error('用户未认证，请在设置中填写正确的用户密码')
-		}
-		if (password !== process.env.OPENAI_ADMAIN_TOKEN && !isPasswordInFile(password)) {
-			throw new Error('用户未认证，请在设置中填写正确的用户密码')
-		}
+    if (isExpire)
+      throw new Error('服务时间已过期，请续费')
+
+    if (!password)
+      throw new Error('用户未认证，请在设置中填写正确的用户密码')
+
+    if (password !== process.env.OPENAI_ADMAIN_TOKEN && !isPasswordInFile(password))
+      throw new Error('用户未认证，请在设置中填写正确的用户密码')
+
     let firstChunk = true
     await chatReplyProcess({
       message: prompt,
@@ -69,12 +69,12 @@ router.post('/config', auth, async (req, res) => {
 
 router.post('/addPasswd', auth, async (req, res) => {
   try {
-    const { token, admin } = req.body as { token: string, admin: string }
-		if (!admin || admin !== process.env.OPENAI_ADMAIN_TOKEN) {
-			res.send({ status: 'Fail', message: '您没有权限', data: null })
-			return
-		}
-		addPasswordToFile(token)
+    const { token, admin } = req.body as { token: string; admin: string }
+    if (!admin || admin !== process.env.OPENAI_ADMAIN_TOKEN) {
+      res.send({ status: 'Fail', message: '您没有权限', data: null })
+      return
+    }
+    addPasswordToFile(token)
     res.send({ status: 'Success', message: '添加成功', data: null })
   }
   catch (error) {
@@ -84,12 +84,12 @@ router.post('/addPasswd', auth, async (req, res) => {
 
 router.post('/removePasswd', auth, async (req, res) => {
   try {
-    const { token, admin } = req.body as { token: string, admin: string }
-		if (!admin || admin !== process.env.OPENAI_ADMAIN_TOKEN) {
-			res.send({ status: 'Fail', message: '您没有权限', data: null })
-			return
-		}
-  	removePasswordFromFile(token)
+    const { token, admin } = req.body as { token: string; admin: string }
+    if (!admin || admin !== process.env.OPENAI_ADMAIN_TOKEN) {
+      res.send({ status: 'Fail', message: '您没有权限', data: null })
+      return
+    }
+    removePasswordFromFile(token)
     res.send({ status: 'Success', message: '删除成功', data: null })
   }
   catch (error) {
@@ -99,8 +99,8 @@ router.post('/removePasswd', auth, async (req, res) => {
 
 router.post('/session', async (req, res) => {
   try {
-		const EXPIRE_DATE_TIME = process.env.EXPIRE_DATE_TIME
-		isExpire = await compareTime(EXPIRE_DATE_TIME)
+    const EXPIRE_DATE_TIME = process.env.EXPIRE_DATE_TIME
+    isExpire = await compareTime(EXPIRE_DATE_TIME)
     const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
     const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
     res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel() } })
