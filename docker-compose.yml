@@ -41,7 +41,7 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      MYSQL_USER: root
-      MYSQL_PASSWORD: 1234
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_USER: houp
+      MYSQL_PASSWORD: 624634
+      MYSQL_ROOT_PASSWORD: 624634
       MYSQL_DATABASE: GPTDatabase
