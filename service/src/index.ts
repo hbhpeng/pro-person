@@ -135,6 +135,9 @@ router.post('/admin/user/adduser', async (req, res) => {
       return
 
     const { ...userinfo } = req.body as UserInfo
+    if (!userinfo.username || !userinfo.password)
+      throw new Error('用户名密码不能为空')
+
     const { status, error } = await addOrUpdateUserInfo(userinfo)
     if (error)
       throw error

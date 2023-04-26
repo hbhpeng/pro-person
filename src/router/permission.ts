@@ -24,7 +24,7 @@ export function setupPageGuard(router: Router) {
             return item === 'user'
           })
           if (index !== -1) {
-            next({ name: from.name ?? 'admin' })
+            next({ name: from.name ?? 'Root' })
             return
           }
         }
