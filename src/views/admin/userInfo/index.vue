@@ -17,7 +17,7 @@ export default {
     return {
       users: [
         // 添加更多假数据
-      ],
+      ] as any[],
       ms: useMessage(),
       loading: false,
       userid: -1,
@@ -43,8 +43,8 @@ export default {
     try {
       this.loading = true
       getUserInfo(1, 1000, '').then((res) => {
-        this.users = JSON.parse(res.data).map((value) => {
-          const transform = {}
+        this.users = JSON.parse(res.data as any).map((value: any) => {
+          const transform = {} as any
           transform.userid = value.userid
           transform.username = value.username
           transform.password = value.password
@@ -59,7 +59,7 @@ export default {
         this.loading = false
       })
     }
-    catch (error) {
+    catch (error: any) {
       this.ms.error(error.message ?? '')
       this.loading = false
     }
@@ -97,14 +97,14 @@ export default {
         this.usagecount = 0
         this.userid = -1
       }
-      catch (error) {
+      catch (error: any) {
         this.ms.error(error.message ?? '')
       }
       finally {
         this.loading = false
       }
     },
-    async deleteUser(index) {
+    async deleteUser(index: number) {
       try {
         this.loading = true
         const {
@@ -114,14 +114,14 @@ export default {
         this.ms.success(message ?? '')
         this.users.splice(index, 1)
       }
-      catch (error) {
+      catch (error: any) {
         this.ms.error(error.message ?? '')
       }
       finally {
         this.loading = false
       }
     },
-    editUser(index) {
+    editUser(index: number) {
       const user = this.users[index]
       this.userid = user.userid
       this.username = user.username

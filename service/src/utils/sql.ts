@@ -16,7 +16,7 @@ interface AdminInfo {
 }
 
 const pool = mysql.createPool({
-  host: 'localhost',
+  host: 'mysql',
   port: 3306,
   user: 'houp',
   password: '624634',

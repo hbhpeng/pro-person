@@ -7,10 +7,10 @@ services:
       - 80:3002
     environment:
       # 二选一
-      OPENAI_API_KEY:
+      OPENAI_API_KEY: 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
       # 二选一
       OPENAI_ADMAIN_TOKEN: jiaqi1017
-      EXPIRE_DATE_TIME: 2023-09-01
+      EXPIRE_DATE_TIME: ‘2023-09-01’
       OPENAI_ACCESS_TOKEN:
       # API接口地址，可选，设置 OPENAI_API_KEY 时可用
       OPENAI_API_BASE_URL:
@@ -37,9 +37,10 @@ services:
   mysql:
     image: mysql:5.7
     ports:
-      - "3306:3306"
+      - "3309:3306"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_USER: houp
       MYSQL_PASSWORD: 624634

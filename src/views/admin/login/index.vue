@@ -37,7 +37,7 @@ export default {
         } = await adminActionLogin(this.username, this.password)
         const {
           token,
-        } = JSON.parse(data)
+        } = JSON.parse(data as any)
         const authStore = useAuthStore()
         authStore.setAdmainT(token)
         router.push({
@@ -45,7 +45,7 @@ export default {
         })
         this.ms.success(message ?? '')
       }
-      catch (error) {
+      catch (error: any) {
         this.ms.error(error.message ?? '')
       }
       finally {
