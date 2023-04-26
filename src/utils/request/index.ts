@@ -33,6 +33,11 @@ function http<T = any>(
       window.location.reload()
     }
 
+    if (res.data.status === '2') {
+      authStore.removeAdminT()
+      window.location.reload()
+    }
+
     return Promise.reject(res.data)
   }
 

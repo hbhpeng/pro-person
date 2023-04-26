@@ -10,6 +10,11 @@ service.interceptors.request.use(
     const token = useAuthStore().token
     if (token)
       config.headers.Authorization = `Bearer ${token}`
+
+    const adminToken = useAuthStore().adminToken
+    if (adminToken)
+      config.headers.adminToken = adminToken
+
     return config
   },
   (error) => {

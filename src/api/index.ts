@@ -79,3 +79,41 @@ export function removePassword<T>(token: string, admin: string) {
     data: { token, admin },
   })
 }
+
+export function addOrUpdateUserInfo<T>(username: string, password: string, usagecount: number,
+  usecount: number, userid: number, admin: string, isupdate: boolean) {
+  if (isupdate) {
+    return post<T>({
+      url: '/admin/user/adduser',
+      data: { username, userid: -1, password, usagecount, usecount, admin },
+    })
+  }
+  else {
+    return post<T>({
+      url: '/admin/user/adduser',
+      data: { username, userid, password, usagecount, usecount, admin },
+    })
+  }
+}
+
+export function deleteUserInfo<T>(username: string, password: string, usagecount: number,
+  usecount: number, userid: number, admin: string) {
+  return post<T>({
+    url: '/admin/user/deleteuser',
+    data: { username, userid, password, usagecount, usecount, admin },
+  })
+}
+
+export function getUserInfo<T>(page: number, pageSize: number, admin: string) {
+  return post<T>({
+    url: '/admin/user/getuser',
+    data: { page, pageSize, admin },
+  })
+}
+
+export function adminActionLogin<T>(username: string, password: string) {
+  return post<T>({
+    url: '/admin/login',
+    data: { username, password },
+  })
+}

@@ -1,4 +1,8 @@
+import jwt from 'jsonwebtoken'
 import { isNotEmptyString } from '../utils/is'
+// const jwt = require('jsonwebtoken')
+
+const secret = 'aoidisenIffeOSLfeijfeiKLS'
 
 const auth = async (req, res, next) => {
   const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
@@ -18,4 +22,34 @@ const auth = async (req, res, next) => {
   }
 }
 
-export { auth }
+const sqlAuth = (req, res) => {
+  // const { username } = req.body as UserInfo
+  const token = req.headers.admintoken
+  let isAuth = false
+  if (token) {
+    jwt.verify(token, secret, (error, decoded) => {
+      const tokenFlag = error?.name
+      if (tokenFlag === 'TokenExpiredError' || tokenFlag === 'JsonWebTokenError')
+        isAuth = false
+
+      else
+        isAuth = true
+    })
+  }
+  else {
+    isAuth = false
+  }
+  if (isAuth)
+    return true
+
+  res.send({ status: 'Fail', message: '权限失效，请尝试重新登陆', data: JSON.stringify({ status: '2' }) })
+  return false
+}
+
+const signUser = (username) => {
+  return jwt.sign({ username }, secret, {
+    expiresIn: (60 * 60 * 24) * 7,
+  })
+}
+
+export { auth, sqlAuth, signUser }

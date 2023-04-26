@@ -2,11 +2,13 @@ import express from 'express'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
 import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
-import { auth } from './middleware/auth'
+import { auth, signUser, sqlAuth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
 import { addPasswordToFile, isPasswordInFile, removePasswordFromFile } from './utils/store'
 import { compareTime } from './utils/dateAuth'
+import { addOrUpdateUserInfo, getUserInfoPage, removeUserInfo, verifyAdmin } from './utils/sql'
+import type { UserInfo } from './utils/sql'
 
 const app = express()
 const router = express.Router()
@@ -123,6 +125,68 @@ router.post('/verify', async (req, res) => {
   }
   catch (error) {
     res.send({ status: 'Fail', message: error.message, data: null })
+  }
+})
+
+// 管理账号
+router.post('/admin/user/adduser', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { ...userinfo } = req.body as UserInfo
+    const { status, error } = await addOrUpdateUserInfo(userinfo)
+    if (error)
+      throw error
+
+    res.send({ status: 'Success', message: '操作成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/admin/user/deleteuser', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { ...userinfo } = req.body as UserInfo
+    const { status, error } = await removeUserInfo(userinfo)
+    if (error)
+      throw error
+    res.send({ status: 'Success', message: '删除成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/admin/user/getuser', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { page, pageSize } = req.body as { page: number; pageSize: number }
+    const userInfos: UserInfo[] = await getUserInfoPage(page, pageSize)
+    res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(userInfos) })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body as { username: string; password: string }
+    const isLogin = await verifyAdmin(username, password)
+    if (isLogin)
+      res.send({ status: 'Success', message: '登录成功', data: JSON.stringify({ token: signUser(username) }) })
+    else
+      res.send({ status: 'Fail', message: '用户名或者密码错误', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
   }
 })
 

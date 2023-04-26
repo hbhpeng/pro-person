@@ -1,6 +1,6 @@
 import type { App } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { setupPageGuard } from './permission'
 import { ChatLayout } from '@/views/chat/layout'
 
@@ -26,13 +26,13 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
-    path: '/admin',
+    path: '/j_h_admin',
     name: 'admin',
     component: () => import('@/views/admin/login/index.vue'),
   },
 
   {
-    path: '/user',
+    path: '/j_h_admin/user',
     name: 'user',
     component: () => import('@/views/admin/userInfo/index.vue'),
   },
@@ -45,7 +45,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 export const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
   scrollBehavior: () => ({ left: 0, top: 0 }),
 })
