@@ -34,7 +34,7 @@ if (!isNotEmptyString(process.env.OPENAI_API_KEY) && !isNotEmptyString(process.e
 
 let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
 
-(async () => {
+async function initChatGPTApi() {
   // More Info: https://github.com/transitive-bullshit/chatgpt-api
 
   if (isNotEmptyString(process.env.OPENAI_API_KEY)) {
@@ -80,7 +80,57 @@ let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
     api = new ChatGPTUnofficialProxyAPI({ ...options })
     apiModel = 'ChatGPTUnofficialProxyAPI'
   }
-})()
+}
+
+initChatGPTApi()
+
+// (async () => {
+//   // More Info: https://github.com/transitive-bullshit/chatgpt-api
+
+//   if (isNotEmptyString(process.env.OPENAI_API_KEY)) {
+//     const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
+
+//     const options: ChatGPTAPIOptions = {
+//       apiKey: process.env.OPENAI_API_KEY,
+//       completionParams: { model },
+//       debug: !disableDebug,
+//     }
+
+//     // increase max token limit if use gpt-4
+//     if (model.toLowerCase().includes('gpt-4')) {
+//       // if use 32k model
+//       if (model.toLowerCase().includes('32k')) {
+//         options.maxModelTokens = 32768
+//         options.maxResponseTokens = 8192
+//       }
+//       else {
+//         options.maxModelTokens = 8192
+//         options.maxResponseTokens = 2048
+//       }
+//     }
+
+//     if (isNotEmptyString(OPENAI_API_BASE_URL))
+//       options.apiBaseUrl = `${OPENAI_API_BASE_URL}/v1`
+
+//     setupProxy(options)
+
+//     api = new ChatGPTAPI({ ...options })
+//     apiModel = 'ChatGPTAPI'
+//   }
+//   else {
+//     const options: ChatGPTUnofficialProxyAPIOptions = {
+//       accessToken: process.env.OPENAI_ACCESS_TOKEN,
+//       apiReverseProxyUrl: isNotEmptyString(process.env.API_REVERSE_PROXY) ? process.env.API_REVERSE_PROXY : 'https://bypass.churchless.tech/api/conversation',
+//       model,
+//       debug: !disableDebug,
+//     }
+
+//     setupProxy(options)
+
+//     api = new ChatGPTUnofficialProxyAPI({ ...options })
+//     apiModel = 'ChatGPTUnofficialProxyAPI'
+//   }
+// })()
 
 async function chatReplyProcess(options: RequestOptions) {
   const { message, lastContext, process, systemMessage, temperature, top_p } = options
@@ -215,4 +265,4 @@ function currentModel(): ApiModel {
 
 export type { ChatContext, ChatMessage }
 
-export { chatReplyProcess, chatConfig, currentModel }
+export { chatReplyProcess, chatConfig, currentModel, initChatGPTApi }

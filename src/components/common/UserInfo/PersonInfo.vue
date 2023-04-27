@@ -28,26 +28,26 @@ const username = ref('')
 const totalChars = ref(0)
 const usedChars = ref(0.0)
 const ms = useMessage()
-let loading = false
+const loading = ref(false)
 
 const requestUserInfo = () => {
   try {
-    loading = true
+    loading.value = true
     getSingleUserInfo().then((res) => {
       const userInfo = JSON.parse(res.data as any)
       username.value = userInfo.username as string
       totalChars.value = userInfo.usagecount as number
       usedChars.value = userInfo.usecount as number
       ms.success(res.message ?? '')
-      loading = false
+      loading.value = false
     }).catch((reason: any) => {
       ms.success(reason.message ?? '')
-      loading = false
+      loading.value = false
     })
   }
   catch (error: any) {
     ms.error(error.message ?? '')
-    loading = false
+    loading.value = false
   }
 }
 
@@ -68,9 +68,9 @@ const loginOut = () => {
 </script>
 
 <template>
-  <NSpin :show="loading">
-    <!-- 自定义模态框 -->
-    <div v-if="showModal" class="modal">
+  <!-- 自定义模态框 -->
+  <div v-if="showModal" class="modal">
+    <NSpin :show="loading">
       <div class="modal-content">
         <button class="close-button" @click="showModal = false">
           X
@@ -83,8 +83,8 @@ const loginOut = () => {
           退出登录
         </button>
       </div>
-    </div>
-  </NSpin>
+    </NSpin>
+  </div>
 </template>
 
 <style>

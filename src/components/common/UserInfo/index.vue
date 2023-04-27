@@ -41,7 +41,7 @@ const registerFormVisible = ref(false)
 const username = ref('')
 const password = ref('')
 const ms = useMessage()
-let loading = false
+const loading = ref(false)
 
 watch(
   () => showModal,
@@ -97,7 +97,7 @@ const validateCanNext = () => {
 
 const loginOrRegister = async (isLogin: boolean) => {
   try {
-    loading = true
+    loading.value = true
     let userdata: any
     if (isLogin)
       userdata = await userActionLogin(username.value, password.value)
@@ -119,7 +119,7 @@ const loginOrRegister = async (isLogin: boolean) => {
     ms.error(error.message ?? '')
   }
   finally {
-    loading = false
+    loading.value = false
   }
 }
 
@@ -134,8 +134,8 @@ const registerAction = async () => {
 </script>
 
 <template>
-  <NSpin :show="loading">
-    <div v-if="showModal" class="modal">
+  <div v-if="showModal" class="modal">
+    <NSpin :show="loading">
       <div class="modal-content">
         <button class="close-button" @click="closeModal">
           X
@@ -175,8 +175,8 @@ const registerAction = async () => {
           <p>已经有账户? <a class="tap-a" href="#" @click.prevent="showLoginForm">立即登录!</a></p>
         </div>
       </div>
-    </div>
-  </NSpin>
+    </NSpin>
+  </div>
 </template>
 
 <style>

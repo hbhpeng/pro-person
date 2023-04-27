@@ -1,7 +1,7 @@
 import express from 'express'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
-import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
+import { chatConfig, chatReplyProcess, currentModel, initChatGPTApi } from './chatgpt'
 import { auth, signUser, sqlAuth, userSqlAuth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
@@ -204,6 +204,7 @@ router.post('/admin/api/changeapikeys', async (req, res) => {
 
     const { apikey } = req.body as { apikey: string }
     process.env.OPENAI_API_KEY = apikey
+    initChatGPTApi()
     res.send({ status: 'Success', message: '操作成功', data: null })
   }
   catch (error) {
