@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getAdmainToken, getToken, getUserToken, removeAdmainToken, removeToken, setAdmainToken, setToken } from './helper'
+import { getAdmainToken, getToken, getUserToken, removeAdmainToken, removeToken, removeUserToken, setAdmainToken, setToken, setUserToken } from './helper'
 import { store } from '@/store'
 import { fetchSession } from '@/api'
 
@@ -59,6 +59,16 @@ export const useAuthStore = defineStore('auth-store', {
     setAdmainT(token: string) {
       this.adminToken = token
       setAdmainToken(token)
+    },
+
+    removeUserT() {
+      this.userToken = undefined
+      removeUserToken()
+    },
+
+    setUserT(token: string) {
+      this.userToken = token
+      setUserToken(token)
     },
   },
 })

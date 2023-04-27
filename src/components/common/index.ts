@@ -4,5 +4,7 @@ import SvgIcon from './SvgIcon/index.vue'
 import UserAvatar from './UserAvatar/index.vue'
 import Setting from './Setting/index.vue'
 import PromptStore from './PromptStore/index.vue'
+import UserInfo from './UserInfo/index.vue'
+import PersonInfo from './UserInfo/PersonInfo.vue'
 
-export { HoverButton, NaiveProvider, SvgIcon, UserAvatar, Setting, PromptStore }
+export { HoverButton, NaiveProvider, SvgIcon, UserAvatar, Setting, PromptStore, UserInfo, PersonInfo }

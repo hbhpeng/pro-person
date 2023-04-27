@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import { isNotEmptyString } from '../utils/is'
 // const jwt = require('jsonwebtoken')
 
-const secret = 'aoidisenIffeOSLfeijfeiKLS'
+const secret = 'aoid&^isen[Iff_=eOSL@#feijfe%iKL}S'
 
 const auth = async (req, res, next) => {
   const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
@@ -52,4 +52,20 @@ const signUser = (username) => {
   })
 }
 
-export { auth, sqlAuth, signUser }
+const userSqlAuth = (req, res) => {
+  // const { username } = req.body as UserInfo
+  const token = req.headers.usertoken
+  let auth = ''
+  if (token) {
+    jwt.verify(token, secret, (error, decoded) => {
+      const tokenFlag = error?.name
+      if (tokenFlag === 'TokenExpiredError' || tokenFlag === 'JsonWebTokenError')
+        auth = ''
+      else
+        auth = decoded.username
+    })
+  }
+  return auth
+}
+
+export { auth, sqlAuth, signUser, userSqlAuth }

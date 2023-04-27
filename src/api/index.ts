@@ -117,3 +117,24 @@ export function adminActionLogin<T>(username: string, password: string) {
     data: { username, password },
   })
 }
+
+export function getSingleUserInfo<T>() {
+  return post<T>({
+    url: '/user/getuserinfo',
+    data: { uid: Math.random() % 20 },
+  })
+}
+
+export function userActionLogin<T>(username: string, password: string) {
+  return post<T>({
+    url: '/user/login',
+    data: { username, password },
+  })
+}
+
+export function userActionRegist<T>(username: string, password: string) {
+  return post<T>({
+    url: '/user/register',
+    data: { username, password },
+  })
+}

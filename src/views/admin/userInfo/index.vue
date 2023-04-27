@@ -43,18 +43,10 @@ export default {
     try {
       this.loading = true
       getUserInfo(1, 1000, '').then((res) => {
-        this.users = JSON.parse(res.data as any).map((value: any) => {
-          const transform = {} as any
-          transform.userid = value.userid
-          transform.username = value.username
-          transform.password = value.password
-          transform.usagecount = value.usageword
-          transform.usecount = value.useword
-          return transform
-        })
+        this.users = JSON.parse(res.data as any)
         this.ms.success(res.message ?? '')
         this.loading = false
-      }).catch((reason) => {
+      }).catch((reason: any) => {
         this.ms.success(reason.message ?? '')
         this.loading = false
       })

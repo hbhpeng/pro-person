@@ -5,14 +5,35 @@ import { NButton, NLayoutSider } from 'naive-ui'
 import List from './List.vue'
 import Footer from './Footer.vue'
 import { useAppStore, useChatStore } from '@/store'
+import { useAuthStoreWithout } from '@/store/modules/auth'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
-import { PromptStore } from '@/components/common'
+import { PersonInfo, PromptStore, UserInfo } from '@/components/common'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
+const authStore = useAuthStoreWithout()
+const userToken = authStore.$state.userToken
 
 const { isMobile } = useBasicLayout()
 const show = ref(false)
+const loginBtShow = ref(false)
+const loginVwShow = ref(false)
+const personVwShow = ref(false)
+
+if (!authStore.$state.userToken)
+  loginBtShow.value = true
+
+watch(
+  () => authStore.$state.userToken,
+  (value: string) => {
+    if (value)
+      loginBtShow.value = false
+
+    else
+      loginBtShow.value = true
+  },
+  { deep: true },
+)
 
 const collapsed = computed(() => appStore.siderCollapsed)
 
@@ -55,6 +76,10 @@ watch(
     flush: 'post',
   },
 )
+
+const showChongZhi = () => {
+  window.alert('请联系微信13210119727')
+}
 </script>
 
 <template>
@@ -79,9 +104,24 @@ watch(
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
-        <div class="p-4">
+        <div class="p-1">
           <NButton block @click="show = true">
             {{ $t('store.siderButton') }}
+          </NButton>
+        </div>
+        <div class="p-1">
+          <NButton block @click="showChongZhi">
+            充值字数
+          </NButton>
+        </div>
+        <div v-if="loginBtShow" class="p-1">
+          <NButton block @click="loginVwShow = true">
+            立即登录
+          </NButton>
+        </div>
+        <div v-else class="p-1">
+          <NButton block @click="personVwShow = true">
+            个人中心
           </NButton>
         </div>
       </main>
@@ -92,4 +132,6 @@ watch(
     <div v-show="!collapsed" class="fixed inset-0 z-40 bg-black/40" @click="handleUpdateCollapsed" />
   </template>
   <PromptStore v-model:visible="show" />
+  <UserInfo v-model:visible="loginVwShow" />
+  <PersonInfo v-model:visible="personVwShow" />
 </template>

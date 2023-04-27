@@ -15,6 +15,10 @@ service.interceptors.request.use(
     if (adminToken)
       config.headers.adminToken = adminToken
 
+    const userToken = useAuthStore().userToken
+    if (userToken)
+      config.headers.userToken = userToken
+
     return config
   },
   (error) => {

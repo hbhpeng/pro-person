@@ -38,6 +38,11 @@ function http<T = any>(
       window.location.reload()
     }
 
+    if (res.data.status === '3') {
+      authStore.removeUserT()
+      window.location.reload()
+    }
+
     return Promise.reject(res.data)
   }
 
