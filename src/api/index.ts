@@ -80,6 +80,13 @@ export function removePassword<T>(token: string, admin: string) {
   })
 }
 
+export function changeOpenApi<T>(apikey: string) {
+  return post<T>({
+    url: '/admin/api/changeapikeys',
+    data: { apikey },
+  })
+}
+
 export function addOrUpdateUserInfo<T>(username: string, password: string, usagecount: number,
   usecount: number, userid: number, admin: string, isupdate: boolean) {
   if (isupdate) {

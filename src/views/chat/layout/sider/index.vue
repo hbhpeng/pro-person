@@ -20,12 +20,12 @@ const loginBtShow = ref(false)
 const loginVwShow = ref(false)
 const personVwShow = ref(false)
 
-if (!authStore.$state.userToken)
+if (!userToken)
   loginBtShow.value = true
 
 watch(
   () => authStore.$state.userToken,
-  (value: string) => {
+  (value: any) => {
     if (value)
       loginBtShow.value = false
 

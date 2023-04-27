@@ -197,6 +197,20 @@ router.post('/admin/login', async (req, res) => {
   }
 })
 
+router.post('/admin/api/changeapikeys', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { apikey } = req.body as { apikey: string }
+    process.env.OPENAI_API_KEY = apikey
+    res.send({ status: 'Success', message: '操作成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
 // 用户管理
 router.post('/user/login', async (req, res) => {
   try {

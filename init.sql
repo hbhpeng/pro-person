@@ -1,7 +1,7 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : localhost_3306
+ Source Server         : GPTC
  Source Server Type    : MySQL
  Source Server Version : 50724
  Source Host           : localhost:3306
@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 26/04/2023 15:36:08
+ Date: 27/04/2023 15:20:38
 */
 
 SET NAMES utf8mb4;
@@ -43,15 +43,13 @@ COMMIT;
 DROP TABLE IF EXISTS `GPTUserInfo`;
 CREATE TABLE `GPTUserInfo` (
   `username` varchar(100) NOT NULL,
-  `usagecount` int(255) unsigned DEFAULT '0',
-  `usecount` int(255) unsigned DEFAULT '0',
+  `usagecount` bigint(255) unsigned DEFAULT '0',
+  `usecount` float(255,6) unsigned DEFAULT '0.000000',
   `password` text NOT NULL,
   `userid` int(255) unsigned NOT NULL AUTO_INCREMENT,
-  `usageword` bigint(255) DEFAULT '0',
-  `useword` float(255,6) DEFAULT '0.000000',
   PRIMARY KEY (`userid`,`username`) USING BTREE,
   UNIQUE KEY `userid` (`userid`),
   UNIQUE KEY `username` (`username`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
 
 SET FOREIGN_KEY_CHECKS = 1;

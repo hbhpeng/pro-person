@@ -5,6 +5,7 @@ import {
 } from 'naive-ui'
 import {
   addOrUpdateUserInfo,
+  changeOpenApi,
   deleteUserInfo,
   getUserInfo,
 } from '@/api'
@@ -27,6 +28,7 @@ export default {
       currentPage: 1,
       pageSize: 10,
       usecount: 0,
+      openapi: '',
     }
   },
   computed: {
@@ -68,6 +70,21 @@ export default {
     // }
   },
   methods: {
+    async changeKey() {
+      try {
+        this.loading = true
+        const {
+          message,
+        } = await changeOpenApi(this.openapi)
+        this.ms.success(message ?? '')
+      }
+      catch (error: any) {
+        this.ms.error(error.message ?? '')
+      }
+      finally {
+        this.loading = false
+      }
+    },
     async addUser() {
       const newUser = {
         username: this.username,
@@ -136,6 +153,12 @@ export default {
 <template>
   <NSpin :show="loading">
     <div class="container">
+      <div>
+        <input v-model="openapi" placeholder="秘钥">
+        <button @click="changeKey">
+          更换
+        </button>
+      </div>
       <div class="form">
         <input v-model="username" placeholder="用户名">
         <input v-model="password" placeholder="用户密码">
