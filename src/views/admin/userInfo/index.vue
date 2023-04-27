@@ -104,6 +104,7 @@ export default {
         this.username = ''
         this.password = ''
         this.usagecount = 0
+        this.usecount = 0
         this.userid = -1
       }
       catch (error: any) {
@@ -136,7 +137,8 @@ export default {
       this.username = user.username
       this.usagecount = user.usagecount
       this.password = user.password
-      this.deleteUser(index)
+      this.usecount = user.usecount
+      this.users.splice(index, 1)
     },
     prevPage() {
       if (this.currentPage > 1)
