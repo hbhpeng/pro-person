@@ -16,7 +16,7 @@ export function setupPageGuard(router: Router) {
     }
     else {
       const index = adminAuthPage.findIndex((item) => {
-        return item === 'user'
+        return item === to.name
       })
       if (index !== -1) {
         next({ name: from.name ?? 'Root' })
