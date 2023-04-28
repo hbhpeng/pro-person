@@ -25,23 +25,27 @@ app.all('*', (_, res, next) => {
   next()
 })
 
+async function chatCheck(req, res, prompt) {
+  if (isExpire)
+    throw new Error('服务时间已过期，请续费')
+
+  const username = userSqlAuth(req, res)
+  if (!username || username.length < 5)
+    throw new Error('您不能发送消息，请先登录，如果已经登录请重新登录')
+  const userInfo = await getUserInfo(username)
+  if (userInfo.usecount - userInfo.usagecount >= 0.0)
+    throw new Error('您的字数已经超了，请购买字数包')
+
+  userInfo.usecount = userInfo.usecount + prompt.length / 10000.0
+  addOrUpdateUserInfo(userInfo)
+}
+
 router.post('/chat-process', [auth, limiter], async (req, res) => {
   res.setHeader('Content-type', 'application/octet-stream')
 
   try {
     const { prompt, options = {}, systemMessage, temperature, top_p } = req.body as RequestProps
-    if (isExpire)
-      throw new Error('服务时间已过期，请续费')
-
-    const username = userSqlAuth(req, res)
-    if (!username || username.length < 5)
-      throw new Error('您不能发送消息，请先登录，如果已经登录请重新登录')
-    const userInfo = await getUserInfo(username)
-    if (userInfo.usecount - userInfo.usagecount >= 0.0)
-      throw new Error('您的字数已经超了，请购买字数包')
-
-    userInfo.usecount = userInfo.usecount + prompt.length / 10000.0
-    addOrUpdateUserInfo(userInfo)
+    await chatCheck(req, res, prompt)
 
     let firstChunk = true
     await chatReplyProcess({
@@ -267,11 +271,13 @@ router.post('/user/getuserinfo', async (req, res) => {
 router.post('/chat/image', async (req, res) => {
   try {
     const { prompot } = req.body as { prompot: string }
+    await chatCheck(req, res, prompot)
     const url = await midjourney(`mdjrny-v4 style${prompot}`)
     res.send({ status: 'Success', message: '', data: JSON.stringify({ content: `![image 图片](${url})` }) })
   }
   catch (error) {
-    res.send({ status: 'Fail', message: '操作失败', data: null })
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    res.end()
   }
 })
 

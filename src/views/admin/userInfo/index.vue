@@ -29,6 +29,7 @@ export default {
       pageSize: 10,
       usecount: 0,
       openapi: '',
+      queryname: '',
     }
   },
   computed: {
@@ -36,6 +37,10 @@ export default {
       return Math.ceil(this.users.length / this.pageSize)
     },
     displayedUsers() {
+      const searchStr = this.queryname.trim()
+      if (searchStr.length > 0)
+        return this.users.filter((item: any) => item.username.includes(searchStr))
+
       const start = (this.currentPage - 1) * this.pageSize
       const end = start + this.pageSize
       return this.users.slice(start, end)
@@ -114,16 +119,15 @@ export default {
         this.loading = false
       }
     },
-    async deleteUser(index: number) {
-      index = (this.currentPage - 1) * this.pageSize + index
+    async deleteUser(user: any) {
       try {
         this.loading = true
         const {
           message,
-        } = await deleteUserInfo(this.users[index].username, this.users[index].password, this.users[index]
-          .usagecount, this.users[index].usecount, this.users[index].userid, '')
+        } = await deleteUserInfo(user.username, user.password, user
+          .usagecount, user.usecount, user.userid, '')
         this.ms.success(message ?? '')
-        this.users.splice(index, 1)
+        this.users = this.users.filter((item: any) => user.username !== item.username)
       }
       catch (error: any) {
         this.ms.error(error.message ?? '')
@@ -132,15 +136,13 @@ export default {
         this.loading = false
       }
     },
-    editUser(index: number) {
-      index = (this.currentPage - 1) * this.pageSize + index
-      const user = this.users[index]
+    editUser(user: any) {
       this.userid = user.userid
       this.username = user.username
       this.usagecount = user.usagecount
       this.password = user.password
       this.usecount = user.usecount
-      this.users.splice(index, 1)
+      this.users = this.users.filter((item: any) => user.username !== item.username)
     },
     prevPage() {
       if (this.currentPage > 1)
@@ -162,6 +164,8 @@ export default {
         <button @click="changeKey">
           更换
         </button>
+
+        <input v-model="queryname" placeholder="用户名">
       </div>
       <div class="form">
         <input v-model="username" placeholder="用户名">
@@ -191,10 +195,10 @@ export default {
             <td>{{ user.usecount }}</td>
             <td>{{ user.password }}</td>
             <td>
-              <button @click="editUser(index)">
+              <button @click="editUser(user)">
                 编辑
               </button>
-              <button style="margin-left: 10px;" @click="deleteUser(index)">
+              <button style="margin-left: 10px;" @click="deleteUser(user)">
                 删除
               </button>
             </td>
