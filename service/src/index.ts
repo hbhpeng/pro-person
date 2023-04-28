@@ -1,4 +1,5 @@
 import express from 'express'
+import midjourney from 'midjourney-client'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
 import { chatConfig, chatReplyProcess, currentModel, initChatGPTApi } from './chatgpt'
@@ -257,6 +258,17 @@ router.post('/user/getuserinfo', async (req, res) => {
       res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(userinfo) })
     else
       res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/chat/image', async (req, res) => {
+  try {
+    const { prompot } = req.body as { prompot: string }
+    const url = await midjourney(`mdjrny-v4 style${prompot}`)
+    res.send({ status: 'Success', message: '', data: JSON.stringify({ content: `![image 图片](${url})` }) })
   }
   catch (error) {
     res.send({ status: 'Fail', message: '操作失败', data: null })

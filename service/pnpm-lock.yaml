@@ -28,6 +28,9 @@ dependencies:
   jsonwebtoken:
     specifier: ^9.0.0
     version: 9.0.0
+  midjourney-client:
+    specifier: ^1.0.8
+    version: 1.0.8
   mysql2:
     specifier: ^3.2.3
     version: 3.2.3
@@ -966,6 +969,12 @@ packages:
       quick-lru: 6.1.1
       read-pkg-up: 9.1.0
       uuid: 9.0.0
+    dev: false
+
+  /chiaki@2.0.0:
+    resolution: {integrity: sha512-XCLb713fLcGC4hFG+3Fn9n80jws7vJsaF0TEOBp59OvtCRK7S+0UF4+DCvcSvs51M/dj2IHzn0667jd5MPb5oQ==}
+    dependencies:
+      unstreamify: 2.0.0
     dev: false
 
   /chokidar@3.5.3:
@@ -2676,6 +2685,12 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /midjourney-client@1.0.8:
+    resolution: {integrity: sha512-MXrC11oJynraOmC2stpyNQlKGTayof4gqzHGogwKj+KRvulzSYLt+qKKYoajvzzF2gsYk2XjyjF91BL1T93S2w==}
+    dependencies:
+      node-replicate: 2.0.0
+    dev: false
+
   /mime-db@1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
     engines: {node: '>= 0.6'}
@@ -2807,6 +2822,12 @@ packages:
       data-uri-to-buffer: 4.0.1
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
+    dev: false
+
+  /node-replicate@2.0.0:
+    resolution: {integrity: sha512-vJ8wDLpDh+zEznpTgRdO52+JG5g/mEaon0y9DTkvfMwZ16XjuxnCUGpfS9P8Oea3VXH1+bZJ++a/NzjPhN6QaA==}
+    dependencies:
+      chiaki: 2.0.0
     dev: false
 
   /normalize-package-data@2.5.0:
@@ -3705,6 +3726,10 @@ packages:
   /unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
     engines: {node: '>= 0.8'}
+    dev: false
+
+  /unstreamify@2.0.0:
+    resolution: {integrity: sha512-u4UWtoJglG5dlinKPrr0cdGOL9eGozILn1EmzQ0oforHVM+M/WB8ibwwlEQlbTYMDMIJe6TK/sbVN5WS7ePOxA==}
     dev: false
 
   /uri-js@4.4.1:

@@ -25,7 +25,8 @@ export function fetchChatAPIProcess<T = any>(
     prompt: string
     options?: { conversationId?: string; parentMessageId?: string }
     signal?: GenericAbortSignal
-    onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void },
+    onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void
+  },
 ) {
   const settingStore = useSettingStore()
   const authStore = useAuthStore()
@@ -143,5 +144,13 @@ export function userActionRegist<T>(username: string, password: string) {
   return post<T>({
     url: '/user/register',
     data: { username, password },
+  })
+}
+
+export function getPromotImage<T>(prompot: string, signal?: GenericAbortSignal) {
+  return post<T>({
+    url: '/chat/image',
+    data: { prompot },
+    signal,
   })
 }

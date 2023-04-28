@@ -115,6 +115,7 @@ export default {
       }
     },
     async deleteUser(index: number) {
+      index = (this.currentPage - 1) * this.pageSize + index
       try {
         this.loading = true
         const {
@@ -132,6 +133,7 @@ export default {
       }
     },
     editUser(index: number) {
+      index = (this.currentPage - 1) * this.pageSize + index
       const user = this.users[index]
       this.userid = user.userid
       this.username = user.username

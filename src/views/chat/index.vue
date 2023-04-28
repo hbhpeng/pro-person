@@ -14,7 +14,7 @@ import HeaderComponent from './components/Header/index.vue'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
-import { fetchChatAPIProcess } from '@/api'
+import { fetchChatAPIProcess, getPromotImage } from '@/api'
 import { t } from '@/locales'
 
 let controller = new AbortController()
@@ -106,7 +106,31 @@ async function onConversation() {
   )
   scrollToBottom()
 
+  async function checkIfImage() {
+    if (message.indexOf('[img]') === 0) {
+      const {
+        data,
+      } = await getPromotImage(message.substring(5, message.length), controller.signal)
+      const imageContent: string = JSON.parse(data as string).content
+      updateChatSome(
+        +uuid,
+        dataSources.value.length - 1, {
+          dateTime: new Date().toLocaleString(),
+          text: imageContent,
+          inversion: false,
+          error: false,
+          loading: false,
+        },
+      )
+      return true
+    }
+    return false
+  }
+
   try {
+    if (await checkIfImage())
+      return
+
     let lastText = ''
     const fetchChatAPIOnce = async () => {
       await fetchChatAPIProcess<Chat.ConversationResponse>({
