@@ -7,7 +7,7 @@ import Footer from './Footer.vue'
 import { useAppStore, useChatStore } from '@/store'
 import { useAuthStoreWithout } from '@/store/modules/auth'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
-import { PersonInfo, PromptStore, UserInfo } from '@/components/common'
+import { MakePPT, PersonInfo, PromptStore, UserInfo } from '@/components/common'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
@@ -19,6 +19,7 @@ const show = ref(false)
 const loginBtShow = ref(false)
 const loginVwShow = ref(false)
 const personVwShow = ref(false)
+const aiPPTShow = ref(false)
 
 if (!userToken)
   loginBtShow.value = true
@@ -110,6 +111,11 @@ const showChongZhi = () => {
           </NButton>
         </div>
         <div class="p-1">
+          <NButton block @click="aiPPTShow = true">
+            AI制作ppt
+          </NButton>
+        </div>
+        <div class="p-1">
           <NButton block @click="showChongZhi">
             充值字数
           </NButton>
@@ -134,4 +140,5 @@ const showChongZhi = () => {
   <PromptStore v-model:visible="show" />
   <UserInfo v-model:visible="loginVwShow" />
   <PersonInfo v-model:visible="personVwShow" />
+  <MakePPT v-model:visible="aiPPTShow" />
 </template>

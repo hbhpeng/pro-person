@@ -154,3 +154,18 @@ export function getPromotImage<T>(prompot: string, signal?: GenericAbortSignal) 
     signal,
   })
 }
+
+export function makePPTRequest<T>(topic: string, length: string) {
+  return post<T>({
+    url: '/chat/makeppt',
+    data: { topic, length },
+  })
+}
+
+export function downloadPPTRequest<T>() {
+  return post<T>({
+    url: '/file/downloadppt',
+    data: { },
+    responseType: 'blob',
+  })
+}

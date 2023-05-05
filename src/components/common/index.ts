@@ -7,5 +7,6 @@ import PromptStore from './PromptStore/index.vue'
 import UserInfo from './UserInfo/index.vue'
 import PersonInfo from './UserInfo/PersonInfo.vue'
 import Preview from './Preview/index.vue'
+import MakePPT from './MakePPT/index.vue'
 
-export { HoverButton, NaiveProvider, SvgIcon, UserAvatar, Setting, PromptStore, UserInfo, PersonInfo, Preview }
+export { HoverButton, NaiveProvider, SvgIcon, UserAvatar, Setting, PromptStore, UserInfo, PersonInfo, Preview, MakePPT }

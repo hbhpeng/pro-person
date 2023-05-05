@@ -1,3 +1,6 @@
+import { spawn } from 'child_process'
+import fs from 'fs'
+import path from 'path'
 import express from 'express'
 import midjourney from 'midjourney-client'
 import type { RequestProps } from './types'
@@ -25,7 +28,7 @@ app.all('*', (_, res, next) => {
   next()
 })
 
-async function chatCheck(req, res, prompt) {
+async function chatCheck(req, res, prompt, extraPrice = 0) {
   if (isExpire)
     throw new Error('服务时间已过期，请续费')
 
@@ -33,10 +36,10 @@ async function chatCheck(req, res, prompt) {
   if (!username || username.length < 5)
     throw new Error('您不能发送消息，请先登录，如果已经登录请重新登录')
   const userInfo = await getUserInfo(username)
-  if (userInfo.usecount - userInfo.usagecount >= 0.0)
-    throw new Error('您的字数已经超了，请购买字数包')
+  if (userInfo.usecount + extraPrice - userInfo.usagecount >= 0.0)
+    throw new Error('您的字数不足，请购买字数包')
 
-  userInfo.usecount = userInfo.usecount + prompt.length / 10000.0
+  userInfo.usecount = userInfo.usecount + prompt.length / 10000.0 + extraPrice
   addOrUpdateUserInfo(userInfo)
 }
 
@@ -270,6 +273,11 @@ router.post('/user/getuserinfo', async (req, res) => {
 
 router.post('/chat/image', async (req, res) => {
   try {
+    const username = userSqlAuth(req, res)
+    if (!username) {
+      res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+      return
+    }
     const { prompot } = req.body as { prompot: string }
     await chatCheck(req, res, prompot)
     const url = await midjourney(`mdjrny-v4 style${prompot}`)
@@ -278,6 +286,66 @@ router.post('/chat/image', async (req, res) => {
   catch (error) {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
     res.end()
+  }
+})
+
+router.post('/chat/makeppt', async (req, res) => {
+  try {
+    const username = userSqlAuth(req, res)
+    if (!username) {
+      res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+      return
+    }
+
+    const { topic, length } = req.body as { topic: string; length: string }
+    await chatCheck(req, res, topic, 0.2)
+    // 调用python脚本
+    const pythonProcess = spawn('python', ['./main.py', topic, length, process.env.OPENAI_API_KEY, username])
+
+    // 监听python脚本的输出
+    pythonProcess.stdout.on('data', () => {
+      // console.log(`输出：${data}`);
+    })
+
+    // 监听python脚本的错误
+    pythonProcess.stderr.on('data', () => {
+      // console.error(`错误：${data}`);
+    })
+
+    // 监听python脚本的退出事件
+    pythonProcess.on('close', (code) => {
+      if (code === 0)
+        res.send({ status: 'Success', message: '操作成功', data: '' })
+      else
+        res.send({ status: 'Fail', message: '操作失败', data: '' })
+    })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    res.end()
+  }
+})
+
+app.post('/file/downloadppt', (req, res) => {
+  const username = userSqlAuth(req, res)
+  if (!username) {
+    res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+    return
+  }
+  try {
+    const dirPath = `${path.dirname(path.dirname(__filename))}/data/caches/${username}`
+    const files = fs.readdirSync(dirPath)
+    const firstFile = files[0]
+    const fullPath = `${dirPath}/${firstFile}`
+    const readStream = fs.createReadStream(fullPath)
+    res.writeHead(200, {
+      'Content-Type': 'application/force-download',
+      'Content-Disposition': `attachment; filename=${encodeURIComponent(firstFile)}`,
+    })
+    readStream.pipe(res)
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: '' })
   }
 })
 

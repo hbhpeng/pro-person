@@ -62,6 +62,9 @@ export default {
       this.ms.error(error.message ?? '')
       this.loading = false
     }
+    finally {
+      this.loading = false
+    }
     // try {
     //   this.loading = true
     //   // const { message } = await getUserInfo(0, 1000, '123456')
