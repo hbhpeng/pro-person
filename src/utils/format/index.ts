@@ -42,3 +42,26 @@ export function copyText(options: { text: string; origin?: boolean }) {
     document.execCommand('copy')
   document.body.removeChild(input)
 }
+
+export function appendCopyText(options: { text: string; origin?: boolean }) {
+  const props = { origin: true, ...options }
+
+  let input: HTMLInputElement | HTMLTextAreaElement
+
+  if (props.origin)
+    input = document.createElement('textarea')
+  else
+    input = document.createElement('input')
+
+  input.setAttribute('readonly', 'readonly')
+  navigator.clipboard.readText().then((text) => {
+    input.value = text.trimEnd() + props.text
+    document.body.appendChild(input)
+    input.select()
+    if (document.execCommand('copy'))
+      document.execCommand('copy')
+    document.body.removeChild(input)
+  }, () => {
+
+  })
+}

@@ -42,6 +42,12 @@ const routes: RouteRecordRaw[] = [
     name: 'notFound',
     redirect: '/404',
   },
+
+  {
+    path: '/preview',
+    name: 'preview',
+    component: () => import('@/components/common/Preview/index.vue'),
+  },
 ]
 
 export const router = createRouter({
