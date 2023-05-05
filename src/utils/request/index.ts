@@ -27,7 +27,7 @@ function http<T = any>(
     const authStore = useAuthStore()
 
     if (responseType === 'blob')
-      return res
+      return res as any
 
     if (res.data.status === 'Success' || typeof res.data === 'string')
       return res.data

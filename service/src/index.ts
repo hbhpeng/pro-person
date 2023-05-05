@@ -300,7 +300,7 @@ router.post('/chat/makeppt', async (req, res) => {
     const { topic, length } = req.body as { topic: string; length: string }
     await chatCheck(req, res, topic, 0.2)
     // 调用python脚本
-    const pythonProcess = spawn('python', ['./main.py', topic, length, process.env.OPENAI_API_KEY, username])
+    const pythonProcess = spawn('python3', ['./main.py', topic, length, process.env.OPENAI_API_KEY, username])
 
     // 监听python脚本的输出
     pythonProcess.stdout.on('data', () => {
@@ -321,12 +321,13 @@ router.post('/chat/makeppt', async (req, res) => {
     })
   }
   catch (error) {
+    // console.log(error)
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
     res.end()
   }
 })
 
-app.post('/file/downloadppt', (req, res) => {
+router.post('/file/downloadppt', (req, res) => {
   const username = userSqlAuth(req, res)
   if (!username) {
     res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })

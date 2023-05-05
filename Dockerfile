@@ -51,6 +51,10 @@ COPY --from=frontend /app/dist /app/public
 
 COPY --from=backend /app/build /app/build
 
+RUN apk add python3 py3-pip make g++
+
+RUN python3 -m pip install openai icrawler python-pptx
+
 EXPOSE 3002
 
 CMD ["pnpm", "run", "prod"]
