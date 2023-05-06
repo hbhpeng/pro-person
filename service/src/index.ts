@@ -13,6 +13,14 @@ import { addPasswordToFile, removePasswordFromFile } from './utils/store'
 import { compareTime } from './utils/dateAuth'
 import { addOrUpdateUserInfo, getUserInfo, getUserInfoPage, registerUser, removeUserInfo, validateUser, verifyAdmin, verifyUser } from './utils/sql'
 import type { UserInfo } from './utils/sql'
+import { queryFileQuestion } from './utils/fileqa'
+
+queryFileQuestion('hbhpeng', '变量是什么').then((result) => {
+  // console.log(result)
+}).catch(() => {
+  // console.log(error)
+})
+// console.log(await queryFileQuestion('hbhpeng', '变量是什么'))
 
 const app = express()
 const router = express.Router()
