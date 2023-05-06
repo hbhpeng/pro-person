@@ -51,17 +51,21 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
     await chatCheck(req, res, prompt)
 
     let firstChunk = true
+    let chatString: string
     await chatReplyProcess({
       message: prompt,
       lastContext: options,
       process: (chat: ChatMessage) => {
-        res.write(firstChunk ? JSON.stringify(chat) : `\n${JSON.stringify(chat)}`)
+        chatString = JSON.stringify(chat)
+        res.write(firstChunk ? chatString : `\n${chatString}`)
         firstChunk = false
       },
       systemMessage,
       temperature,
       top_p,
     })
+    if (chatString)
+      await chatCheck(req, res, chatString)
   }
   catch (error) {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
