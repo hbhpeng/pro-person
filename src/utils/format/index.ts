@@ -1,3 +1,5 @@
+import { ss } from '@/utils/storage'
+
 /**
  * 转义 HTML 字符
  * @param source
@@ -35,6 +37,7 @@ export function copyText(options: { text: string; origin?: boolean }) {
     input = document.createElement('input')
 
   input.setAttribute('readonly', 'readonly')
+  ss.set('local_copy_text', props.text)
   input.value = props.text
   document.body.appendChild(input)
   input.select()
@@ -54,14 +57,13 @@ export function appendCopyText(options: { text: string; origin?: boolean }) {
     input = document.createElement('input')
 
   input.setAttribute('readonly', 'readonly')
-  navigator.clipboard.readText().then((text) => {
-    input.value = text.trimEnd() + props.text
-    document.body.appendChild(input)
-    input.select()
-    if (document.execCommand('copy'))
-      document.execCommand('copy')
-    document.body.removeChild(input)
-  }, () => {
 
-  })
+  const last_copy = ss.get('local_copy_text')
+  input.value = last_copy.trimEnd() + props.text
+  ss.set('local_copy_text', input.value)
+  document.body.appendChild(input)
+  input.select()
+  if (document.execCommand('copy'))
+    document.execCommand('copy')
+  document.body.removeChild(input)
 }
