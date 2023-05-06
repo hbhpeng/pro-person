@@ -75,9 +75,12 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
 
-    async setActive(uuid: number) {
+    async setActive(uuid: number, isfile?: boolean) {
       this.active = uuid
-      return await this.reloadRoute(uuid)
+      let fileTag = '0'
+      if (isfile)
+        fileTag = '1'
+      return await this.reloadRoute(uuid, fileTag)
     },
 
     getChatByUuidAndIndex(uuid: number, index: number) {
@@ -182,9 +185,9 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
 
-    async reloadRoute(uuid?: number) {
+    async reloadRoute(uuid?: number, fileType?: string) {
       this.recordState()
-      await router.push({ name: 'Chat', params: { uuid } })
+      await router.push({ name: 'Chat', params: { uuid, fileType } })
     },
 
     recordState() {

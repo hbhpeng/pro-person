@@ -20,3 +20,11 @@ export function getLocalState(): Chat.ChatState {
 export function setLocalState(state: Chat.ChatState) {
   ss.set(LOCAL_NAME, state)
 }
+
+export function setQAFileName(name: string) {
+  ss.set('QAFileName', name)
+}
+
+export function getQAFileName() {
+  return ss.get('QAFileName')
+}

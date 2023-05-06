@@ -13,13 +13,13 @@ const chatStore = useChatStore()
 
 const dataSources = computed(() => chatStore.history)
 
-async function handleSelect({ uuid }: Chat.History) {
+async function handleSelect({ uuid, isFile }: Chat.History) {
   if (isActive(uuid))
     return
 
   if (chatStore.active)
     chatStore.updateHistory(chatStore.active, { isEdit: false })
-  await chatStore.setActive(uuid)
+  await chatStore.setActive(uuid, isFile)
 
   if (isMobile.value)
     appStore.setSiderCollapsed(true)

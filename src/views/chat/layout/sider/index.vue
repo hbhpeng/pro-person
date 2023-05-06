@@ -61,12 +61,30 @@ watch(
 )
 
 const collapsed = computed(() => appStore.siderCollapsed)
+const canAddFileChat = computed(() => {
+  for (const his of chatStore.history) {
+    if (his.isFile)
+      return false
+  }
+  return true
+})
 
 function handleAdd() {
   chatStore.addHistory({
     title: 'New Chat',
     uuid: Date.now(),
     isEdit: false,
+  })
+  if (isMobile.value)
+    appStore.setSiderCollapsed(true)
+}
+
+function handleAddFileQA() {
+  chatStore.addHistory({
+    title: 'New Chat',
+    uuid: Date.now(),
+    isEdit: false,
+    isFile: true,
   })
   if (isMobile.value)
     appStore.setSiderCollapsed(true)
@@ -122,7 +140,7 @@ const showChongZhi = () => {
           <NButton dashed block @click="handleAdd">
             {{ $t('chat.newChatButton') }}
           </NButton>
-          <NButton dashed block style="margin-top: 5px;" @click="handleAddFileQA">
+          <NButton v-if="canAddFileChat" dashed block style="margin-top: 5px;" @click="handleAddFileQA">
             +新建文件解答
           </NButton>
         </div>
