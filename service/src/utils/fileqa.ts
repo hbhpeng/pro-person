@@ -151,7 +151,7 @@ export async function queryFileQuestion(username: string, question: string) {
     return { status: false, message: '文件不存在' }
 
   if (fs.existsSync(fileEmbeddingPath)) {
-    let dataEmbe = fs.readFileSync(fileEmbeddingPath, 'utf8')
+    dataEmbe = fs.readFileSync(fileEmbeddingPath, 'utf8')
     dataEmbe = JSON.parse(dataEmbe)
   }
   else {

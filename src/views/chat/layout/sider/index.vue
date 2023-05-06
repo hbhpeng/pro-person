@@ -1,20 +1,43 @@
 <script setup lang='ts'>
-import type { CSSProperties } from 'vue'
-import { computed, ref, watch } from 'vue'
-import { NButton, NLayoutSider } from 'naive-ui'
+import type {
+  CSSProperties,
+} from 'vue'
+import {
+  computed,
+  ref,
+  watch,
+} from 'vue'
+import {
+  NButton,
+  NLayoutSider,
+} from 'naive-ui'
 import List from './List.vue'
 import Footer from './Footer.vue'
-import { useAppStore, useChatStore } from '@/store'
-import { useAuthStoreWithout } from '@/store/modules/auth'
-import { useBasicLayout } from '@/hooks/useBasicLayout'
-import { MakePPT, PersonInfo, PromptStore, UserInfo } from '@/components/common'
+import {
+  useAppStore,
+  useChatStore,
+} from '@/store'
+import {
+  useAuthStoreWithout,
+} from '@/store/modules/auth'
+import {
+  useBasicLayout,
+} from '@/hooks/useBasicLayout'
+import {
+  MakePPT,
+  PersonInfo,
+  PromptStore,
+  UserInfo,
+} from '@/components/common'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
 const authStore = useAuthStoreWithout()
 const userToken = authStore.$state.userToken
 
-const { isMobile } = useBasicLayout()
+const {
+  isMobile,
+} = useBasicLayout()
 const show = ref(false)
 const loginBtShow = ref(false)
 const loginVwShow = ref(false)
@@ -32,14 +55,19 @@ watch(
 
     else
       loginBtShow.value = true
+  }, {
+    deep: true,
   },
-  { deep: true },
 )
 
 const collapsed = computed(() => appStore.siderCollapsed)
 
 function handleAdd() {
-  chatStore.addHistory({ title: 'New Chat', uuid: Date.now(), isEdit: false })
+  chatStore.addHistory({
+    title: 'New Chat',
+    uuid: Date.now(),
+    isEdit: false,
+  })
   if (isMobile.value)
     appStore.setSiderCollapsed(true)
 }
@@ -48,7 +76,7 @@ function handleUpdateCollapsed() {
   appStore.setSiderCollapsed(!collapsed.value)
 }
 
-const getMobileClass = computed<CSSProperties>(() => {
+const getMobileClass = computed < CSSProperties > (() => {
   if (isMobile.value) {
     return {
       position: 'fixed',
@@ -71,8 +99,7 @@ watch(
   isMobile,
   (val) => {
     appStore.setSiderCollapsed(val)
-  },
-  {
+  }, {
     immediate: true,
     flush: 'post',
   },
@@ -85,21 +112,18 @@ const showChongZhi = () => {
 
 <template>
   <NLayoutSider
-    :collapsed="collapsed"
-    :collapsed-width="0"
-    :width="260"
-    :show-trigger="isMobile ? false : 'arrow-circle'"
-    collapse-mode="transform"
-    position="absolute"
-    bordered
-    :style="getMobileClass"
-    @update-collapsed="handleUpdateCollapsed"
+    :collapsed="collapsed" :collapsed-width="0" :width="260"
+    :show-trigger="isMobile ? false : 'arrow-circle'" collapse-mode="transform" position="absolute" bordered
+    :style="getMobileClass" @update-collapsed="handleUpdateCollapsed"
   >
     <div class="flex flex-col h-full" :style="mobileSafeArea">
       <main class="flex flex-col flex-1 min-h-0">
         <div class="p-4">
           <NButton dashed block @click="handleAdd">
             {{ $t('chat.newChatButton') }}
+          </NButton>
+          <NButton dashed block style="margin-top: 5px;" @click="handleAddFileQA">
+            +新建文件解答
           </NButton>
         </div>
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">

@@ -169,3 +169,15 @@ export function downloadPPTRequest<T>() {
     responseType: 'blob',
   })
 }
+
+export function uploadQuestionFile<T>(file: string) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return post<T>({
+    url: '/file/uploadqafile',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+}
