@@ -88,12 +88,12 @@ export default {
     </div>
     <div v-else class="file-upload">
       <input ref="fileInput" class="file-input" type="file" @change="handleFileChange">
-      <button v-if="file" class="upload-bt" @click="uploadFile">
+      <button v-if="file" class="upload-bt" :disabled="uploading" @click="uploadFile">
         上传
       </button>
       <span v-if="uploading" class="file-span">正在上传...</span>
-      <span v-if="error" class="file-span">{{ error }}</span>
-      <span v-if="success" class="file-span">{{ success }}</span>
+      <span v-if="error && !uploading" class="file-span">{{ error }}</span>
+      <span v-if="success && !uploading" class="file-span">{{ success }}</span>
     </div>
   </div>
 </template>

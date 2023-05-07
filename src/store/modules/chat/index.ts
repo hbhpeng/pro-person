@@ -32,7 +32,8 @@ export const useChatStore = defineStore('chat-store', {
       this.history.unshift(history)
       this.chat.unshift({ uuid: history.uuid, data: chatData })
       this.active = history.uuid
-      this.reloadRoute(history.uuid)
+      const fileTag = history.isFile ? '1' : '0'
+      this.reloadRoute(history.uuid, fileTag)
     },
 
     updateHistory(uuid: number, edit: Partial<Chat.History>) {

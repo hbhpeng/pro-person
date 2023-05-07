@@ -68,15 +68,16 @@ function handleSubmit() {
   onConversation()
 }
 
-const receiveMessage = (message: string) => {
-  updateChatSome(
+const receiveMessage = (content: string) => {
+  addChat(
     +uuid,
-    dataSources.value.length - 1, {
+    {
       dateTime: new Date().toLocaleString(),
-      text: message,
+      text: content,
       inversion: false,
       error: false,
-      loading: false,
+      conversationOptions: null,
+      requestOptions: { prompt: content, options: null },
     },
   )
 }
@@ -131,7 +132,7 @@ async function onConversation() {
   async function checkIfAskFile() {
     if (isFile.value) {
       const { data } = await askFileQuestion(message, controller.signal)
-      const { content } = JSON.parse(data as any)
+      const content = JSON.parse(data as any).message
       updateChatSome(
         +uuid,
         dataSources.value.length - 1, {
@@ -552,7 +553,7 @@ onUnmounted(() => {
           :class="[isMobile ? 'p-2' : 'p-4']"
         >
           <template v-if="isFile">
-            <Upload @receiveMessage="receiveMessage" />
+            <Upload @receive-message="receiveMessage" />
           </template>
           <template v-if="!dataSources.length && !isFile">
             <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
