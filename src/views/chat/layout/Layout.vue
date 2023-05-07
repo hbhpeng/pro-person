@@ -12,7 +12,11 @@ const appStore = useAppStore()
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 
-router.replace({ name: 'Chat', params: { uuid: chatStore.active } })
+const activeModel = chatStore.getChatHistoryByCurrentActive
+let activeIsFile = '0'
+if (activeModel && activeModel.isFile)
+  activeIsFile = '1'
+router.replace({ name: 'Chat', params: { uuid: chatStore.active, fileType: activeIsFile } })
 
 const { isMobile } = useBasicLayout()
 
