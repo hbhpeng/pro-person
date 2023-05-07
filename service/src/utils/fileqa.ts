@@ -9,7 +9,7 @@ import { userSqlAuth } from '../middleware/auth'
 
 export interface FileReadStatus {
   status: boolean
-  message: any
+  message: string
 }
 
 const limit = 10
@@ -134,7 +134,7 @@ export async function queryFileQuestion(username: string, question: string) {
   if (qaCache.has(username)) {
     const qa = qaCache.get(username) as HPFileQA
     const [answer, context] = await qa.callQuery(question)
-    return { status: true, messsage: `相关片段：\n${context} \n\n 回答如下：\n${answer}` }
+    return { status: true, message: `相关片段：\n${context} \n\n 回答如下：\n${answer}` }
   }
   // 获取当前模块所在目录的上上一级目录
   const parentDir = path.join(__dirname, '../../')
@@ -166,10 +166,10 @@ export async function queryFileQuestion(username: string, question: string) {
   qaCache.set(username, qa)
   if (!question) {
     const [answer] = await qa.callQuery('所有的内容做个总结')
-    return { status: true, messsage: `总结如下：\n${answer}` }
+    return { status: true, message: `总结如下：\n${answer}` }
   }
   const [answer, context] = await qa.callQuery(question)
-  return { status: true, messsage: `相关片段：\n${context} \n\n 回答如下：\n${answer}` }
+  return { status: true, message: `相关片段：\n${context} \n\n 回答如下：\n${answer}` }
 }
 
 const storage = multer.diskStorage({
