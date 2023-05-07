@@ -13,6 +13,8 @@ import { addPasswordToFile, removePasswordFromFile } from './utils/store'
 import { compareTime } from './utils/dateAuth'
 import { addOrUpdateUserInfo, getUserInfo, getUserInfoPage, registerUser, removeUserInfo, validateUser, verifyAdmin, verifyUser } from './utils/sql'
 import type { UserInfo } from './utils/sql'
+import { m_upload, queryFileQuestion } from './utils/fileqa'
+import type { FileReadStatus } from './utils/fileqa'
 
 // queryFileQuestion('hbhpeng', '变量是什么').then((result) => {
 
@@ -357,8 +359,63 @@ router.post('/file/downloadppt', (req, res) => {
   }
 })
 
+router.post('/file/uploadqafile', m_upload, async (req, res) => {
+  const username = userSqlAuth(req, res)
+  if (!username) {
+    res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+    return
+  }
+  try {
+    const file = req.file
+    if (file) {
+      const { status, message } = await queryFileQuestion(username, '') as FileReadStatus
+      if (status)
+        res.send({ status: 'Success', message: '上传成功', data: message })
+      else
+        res.send({ status: 'Fail', message, data: '' })
+    }
+    else { res.send({ status: 'Fail', message: '上传失败', data: '' }) }
+  }
+  catch (error) {
+    // res.send({ status: 'Fail', message: '操作失败', data: '' })
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    res.end()
+  }
+})
+
+router.post('/file/askquestion', async (req, res) => {
+  const username = userSqlAuth(req, res)
+  if (!username) {
+    res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+    return
+  }
+  try {
+    const { question } = req.body as { question: string }
+    const answer = await queryFileQuestion(username, question) as FileReadStatus
+    if (answer.status)
+      res.send({ status: 'Success', message: '成功', data: JSON.stringify(answer) })
+    else
+      throw new Error(answer.message)
+  }
+  catch (error) {
+    // res.send({ status: 'Fail', message: '操作失败', data: '' })
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
 app.use('', router)
 app.use('/api', router)
 app.set('trust proxy', 1)
 
 app.listen(3002, () => globalThis.console.log('Server is running on port 3002'))
+
+// const options = {
+//   cert: fs.readFileSync('/path/to/cert.pem'),
+//   key: fs.readFileSync('/path/to/key.pem')
+// };
+// https.createServer(options, app).listen(443, () => {
+//   console.log('Server started on port 443');
+// });

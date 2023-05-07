@@ -1,12 +1,16 @@
 <script lang="ts">
 import { reactive, toRefs } from 'vue'
 import {
+  useMessage,
+} from 'naive-ui'
+import {
   uploadQuestionFile,
 } from '@/api'
 import { getQAFileName, setQAFileName } from '@/store/modules/chat/helper'
+// import fs from 'fs'
 
 export default {
-  setup() {
+  setup(props, context) {
     const state = reactive({
       file: '',
       uploading: false,
@@ -15,6 +19,7 @@ export default {
       exsitFile: '',
     })
 
+    const ms = useMessage()
     const filename = getQAFileName()
     if (filename)
       state.exsitFile = filename
@@ -32,13 +37,21 @@ export default {
       try {
         // const formData = new FormData()
         // formData.append('file', state.file)
-
+        const size = (state.file as any).size
+        if (size > 100 * 1024)
+          ms.error('文件大小不得超过100kb')
         const { data } = await uploadQuestionFile(state.file)
-        setQAFileName(state.file)
+        const filename = (state.file as any).name
+        setQAFileName(filename)
+        state.exsitFile = filename
         state.success = '上传成功'
+        state.error = ''
+
+        context.emit('receiveMessage', data)
       }
       catch (error) {
         state.error = '上传失败'
+        state.success = ''
       }
       finally {
         state.uploading = false
@@ -54,6 +67,7 @@ export default {
       ...toRefs(state),
       handleFileChange,
       uploadFile,
+      reUploadFile,
     }
   },
 }
@@ -61,9 +75,10 @@ export default {
 
 <template>
   <div class="container">
+    <span style="font-size: 12px;">请保证文件文字可读，并且不超过100kb</span>
     <div v-if="exsitFile" class="exist-file-container">
       <span class="file-span">{{ exsitFile }}</span>
-      <button v-if="file" class="upload-bt" @click="reUploadFile">
+      <button class="upload-bt" @click="reUploadFile">
         重新上传
       </button>
     </div>
@@ -82,17 +97,21 @@ export default {
 <style>
 .container {
 display: flex;
-flex-direction: row;
+flex-direction: column;
 align-items: center;
 justify-content: center;
 margin-bottom: 10px;
 padding: 0px;
 }
-.exist-file-containe {
+.exist-file-container {
 display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: center;
+height: 100px;
+width: 100%;
+border: 2px dashed #ccc;
+padding: 20px;
 }
 .file-upload {
 display: flex;

@@ -18,7 +18,7 @@ const gotoPreview = () => {
       <UserAvatar />
     </div> -->
 
-    <HoverButton @click="show = true">
+    <HoverButton tooltip="设置" @click="show = true">
       <span class="text-xl text-[#4f555e] dark:text-white">
         <SvgIcon icon="ri:settings-4-line" />
       </span>

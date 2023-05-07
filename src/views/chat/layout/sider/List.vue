@@ -76,6 +76,7 @@ function isActive(uuid: number) {
                 @keypress="handleEnter(item, false, $event)"
               />
               <span v-else>{{ item.title }}</span>
+              <span v-if="item.isFile" style="color:darkblue;margin-left: 5px;">文件问答</span>
             </div>
             <div v-if="isActive(item.uuid)" class="absolute z-10 flex visible right-1">
               <template v-if="item.isEdit">

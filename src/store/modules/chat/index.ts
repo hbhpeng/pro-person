@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getLocalState, setLocalState } from './helper'
+import { getLocalState, setLocalState, setQAFileName } from './helper'
 import { router } from '@/router'
 
 export const useChatStore = defineStore('chat-store', {
@@ -44,6 +44,10 @@ export const useChatStore = defineStore('chat-store', {
     },
 
     async deleteHistory(index: number) {
+      const chatModel = this.history[index]
+      if (chatModel.isFile)
+        setQAFileName('')
+
       this.history.splice(index, 1)
       this.chat.splice(index, 1)
 
@@ -55,23 +59,26 @@ export const useChatStore = defineStore('chat-store', {
 
       if (index > 0 && index <= this.history.length) {
         const uuid = this.history[index - 1].uuid
+        const fileTag = this.history[index - 1].isFile ? '1' : '0'
         this.active = uuid
-        this.reloadRoute(uuid)
+        this.reloadRoute(uuid, fileTag)
         return
       }
 
       if (index === 0) {
         if (this.history.length > 0) {
           const uuid = this.history[0].uuid
+          const fileTag = this.history[0].isFile ? '1' : '0'
           this.active = uuid
-          this.reloadRoute(uuid)
+          this.reloadRoute(uuid, fileTag)
         }
       }
 
       if (index > this.history.length) {
         const uuid = this.history[this.history.length - 1].uuid
+        const fileTag = this.history[this.history.length - 1].isFile ? '1' : '0'
         this.active = uuid
-        this.reloadRoute(uuid)
+        this.reloadRoute(uuid, fileTag)
       }
     },
 

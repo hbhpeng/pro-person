@@ -4,6 +4,8 @@ import { Configuration, OpenAIApi } from 'openai'
 // import { promisify } from 'util'
 import KDTree from 'kd-tree-javascript'
 import QuickLRU from 'quick-lru'
+import * as multer from 'multer'
+import { userSqlAuth } from '../middleware/auth'
 
 export interface FileReadStatus {
   status: boolean
@@ -162,6 +164,37 @@ export async function queryFileQuestion(username: string, question: string) {
 
   const qa = new HPFileQA(dataEmbe)
   qaCache.set(username, qa)
+  if (!question) {
+    const [answer] = await qa.callQuery('所有的内容做个总结')
+    return { status: true, messsage: `总结如下：\n${answer}` }
+  }
   const [answer, context] = await qa.callQuery(question)
   return { status: true, messsage: `相关片段：\n${context} \n\n 回答如下：\n${answer}` }
 }
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // 获取当前模块所在目录的上上一级目录
+    const username = userSqlAuth(req, null)
+
+    const parentDir = path.join(__dirname, '../../')
+    // 拼接出cache目录的路径
+    const cacheDir = path.join(parentDir, 'data', 'fileread', username)
+
+    // 如果cache目录不存在，则创建它
+    if (!fs.existsSync(cacheDir))
+      fs.mkdirSync(cacheDir, { recursive: true })
+
+    cb(null, cacheDir)
+  },
+  filename: (req, file, cb) => {
+    cb(null, 'file')
+  },
+})
+
+export const m_upload = multer.default({
+  storage,
+  limits: {
+    fileSize: 100 * 1024,
+  },
+}).single('file')

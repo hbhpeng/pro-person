@@ -181,3 +181,11 @@ export function uploadQuestionFile<T>(file: string) {
     },
   })
 }
+
+export function askFileQuestion<T>(question: string, signal?: GenericAbortSignal) {
+  return post<T>({
+    url: '/file/askquestion',
+    data: { question },
+    signal,
+  })
+}

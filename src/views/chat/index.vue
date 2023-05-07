@@ -14,8 +14,9 @@ import HeaderComponent from './components/Header/index.vue'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
-import { fetchChatAPIProcess, getPromotImage } from '@/api'
+import { askFileQuestion, fetchChatAPIProcess, getPromotImage } from '@/api'
 import { t } from '@/locales'
+import { getQAFileName } from '@/store/modules/chat/helper'
 
 let controller = new AbortController()
 
@@ -60,7 +61,24 @@ dataSources.value.forEach((item, index) => {
 })
 
 function handleSubmit() {
+  if (isFile.value && !getQAFileName()) {
+    ms.error('请先上传文件')
+    return
+  }
   onConversation()
+}
+
+const receiveMessage = (message: string) => {
+  updateChatSome(
+    +uuid,
+    dataSources.value.length - 1, {
+      dateTime: new Date().toLocaleString(),
+      text: message,
+      inversion: false,
+      error: false,
+      loading: false,
+    },
+  )
 }
 
 async function onConversation() {
@@ -110,6 +128,26 @@ async function onConversation() {
   )
   scrollToBottom()
 
+  async function checkIfAskFile() {
+    if (isFile.value) {
+      const { data } = await askFileQuestion(message, controller.signal)
+      const { content } = JSON.parse(data as any)
+      updateChatSome(
+        +uuid,
+        dataSources.value.length - 1, {
+          dateTime: new Date().toLocaleString(),
+          text: content,
+          inversion: false,
+          error: false,
+          loading: false,
+        },
+      )
+      return true
+    }
+    return false
+  }
+
+  // 是否要求发送图片
   async function checkIfImage() {
     if (message.indexOf('[img]') === 0) {
       const {
@@ -132,6 +170,10 @@ async function onConversation() {
   }
 
   try {
+    // 问文件
+    if (await checkIfAskFile())
+      return
+    // 问图片
     if (await checkIfImage())
       return
 
@@ -510,7 +552,7 @@ onUnmounted(() => {
           :class="[isMobile ? 'p-2' : 'p-4']"
         >
           <template v-if="isFile">
-            <Upload />
+            <Upload @receiveMessage="receiveMessage" />
           </template>
           <template v-if="!dataSources.length && !isFile">
             <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
@@ -547,12 +589,12 @@ onUnmounted(() => {
     <footer :class="footerClass">
       <div class="w-full max-w-screen-xl m-auto">
         <div class="flex items-center justify-between space-x-2">
-          <HoverButton @click="handleClear">
+          <HoverButton tooltip="清空" @click="handleClear">
             <span class="text-xl text-[#4f555e] dark:text-white">
               <SvgIcon icon="ri:delete-bin-line" />
             </span>
           </HoverButton>
-          <HoverButton v-if="!isMobile" @click="handleExport">
+          <HoverButton v-if="!isMobile" tooltip="导出" @click="handleExport">
             <span class="text-xl text-[#4f555e] dark:text-white">
               <SvgIcon icon="ri:download-2-line" />
             </span>
