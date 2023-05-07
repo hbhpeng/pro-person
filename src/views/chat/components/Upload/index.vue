@@ -29,17 +29,21 @@ export default {
     }
 
     const uploadFile = async () => {
-      if (!state.file)
+      if (!state.file) {
+        ms.error('请选择文件')
         return
+      }
+      const size = (state.file as any).size
+      if (size > 100 * 1024) {
+        ms.error('文件大小不得超过100kb')
+        return
+      }
 
       state.uploading = true
 
       try {
         // const formData = new FormData()
         // formData.append('file', state.file)
-        const size = (state.file as any).size
-        if (size > 100 * 1024)
-          ms.error('文件大小不得超过100kb')
         const { data } = await uploadQuestionFile(state.file)
         const filename = (state.file as any).name
         setQAFileName(filename)
@@ -103,6 +107,7 @@ justify-content: center;
 margin-bottom: 10px;
 padding: 0px;
 }
+
 .exist-file-container {
 display: flex;
 flex-direction: column;
@@ -113,6 +118,7 @@ width: 100%;
 border: 2px dashed #ccc;
 padding: 20px;
 }
+
 .file-upload {
 display: flex;
 flex-direction: row;
