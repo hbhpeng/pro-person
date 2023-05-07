@@ -13,7 +13,7 @@ import { addPasswordToFile, removePasswordFromFile } from './utils/store'
 import { compareTime } from './utils/dateAuth'
 import { addOrUpdateUserInfo, getUserInfo, getUserInfoPage, registerUser, removeUserInfo, validateUser, verifyAdmin, verifyUser } from './utils/sql'
 import type { UserInfo } from './utils/sql'
-import { m_upload, queryFileQuestion } from './utils/fileqa'
+import { clearUserFileCache, m_upload, queryFileQuestion } from './utils/fileqa'
 import type { FileReadStatus } from './utils/fileqa'
 
 // queryFileQuestion('hbhpeng', '变量是什么').then((result) => {
@@ -311,7 +311,7 @@ router.post('/chat/makeppt', async (req, res) => {
     }
 
     const { topic, length } = req.body as { topic: string; length: string }
-    await chatCheck(req, res, topic, 0.2)
+    await chatCheck(req, res, topic, 1)
     // 调用python脚本
     const pythonProcess = spawn('python3', ['./main.py', topic, length, process.env.OPENAI_API_KEY, username])
 
@@ -363,7 +363,7 @@ router.post('/file/downloadppt', (req, res) => {
   }
 })
 
-router.post('/file/uploadqafile', m_upload, async (req, res) => {
+router.post('/file/uploadqafile', m_upload.single('file'), async (req, res) => {
   const username = userSqlAuth(req, res)
   if (!username) {
     res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
@@ -372,6 +372,9 @@ router.post('/file/uploadqafile', m_upload, async (req, res) => {
   try {
     const file = req.file
     if (file) {
+      clearUserFileCache(username)
+      await chatCheck(req, res, '', 1)
+
       const { status, message } = await queryFileQuestion(username, '') as FileReadStatus
       if (status)
         res.send({ status: 'Success', message: '上传成功', data: message })
@@ -396,10 +399,12 @@ router.post('/file/askquestion', async (req, res) => {
   try {
     const { question } = req.body as { question: string }
     const answer = await queryFileQuestion(username, question) as FileReadStatus
-    if (answer.status)
+    if (answer.status) {
+      await chatCheck(req, res, question + answer)
+
       res.send({ status: 'Success', message: '成功', data: JSON.stringify(answer) })
-    else
-      throw new Error(answer.message)
+    }
+    else { throw new Error(answer.message) }
   }
   catch (error) {
     // res.send({ status: 'Fail', message: '操作失败', data: '' })

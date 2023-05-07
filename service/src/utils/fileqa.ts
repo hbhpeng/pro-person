@@ -102,15 +102,24 @@ class HPFileQA {
   }
 
   async completion(query: string, context: any) {
+    const lens = context.map(text => text.length)
+    let maximum = 3000
+    for (let i = 0; i < lens.length; i++) {
+      maximum -= lens[i]
+      if (maximum < 0) {
+        // 超过最大长度，截断到前${i + 1}个片段
+        context = context.slice(0, i + 1)
+        break
+      }
+    }
     // Create a completion.
-    const text = context.join('\n')
+    const text = context.map((text, index) => `${index}. ${text}`).join('\n')
 
     const response = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'system', content: `你是一个有帮助的AI文章助手，从下文中提取有用的内容进行回答，不能回答不在下文提到的内容，相关性从高到底排序：\n\n${text}` },
         { role: 'user', content: query },
       ],
-      max_tokens: 3000,
     }).then((res) => {
       return res.data
     })
@@ -134,10 +143,10 @@ export async function queryFileQuestion(username: string, question: string) {
   if (qaCache.has(username)) {
     const qa = qaCache.get(username) as HPFileQA
     const [answer, context] = await qa.callQuery(question)
-    return { status: true, message: `相关片段：\n${context} \n\n 回答如下：\n${answer}` }
+    return { status: true, message: `## 相关片段：\n#### ${context} \n\n## 回答如下：\n#### ${answer}` }
   }
   // 获取当前模块所在目录的上上一级目录
-  const parentDir = path.join(__dirname, '../../')
+  const parentDir = path.join(__dirname, '../')
 
   // 拼接出cache目录的路径
   const cacheDir = path.join(parentDir, 'data', 'fileread', username)
@@ -166,10 +175,10 @@ export async function queryFileQuestion(username: string, question: string) {
   qaCache.set(username, qa)
   if (!question) {
     const [answer] = await qa.callQuery('所有的内容做个总结')
-    return { status: true, message: `总结如下：\n${answer}` }
+    return { status: true, message: `## 总结如下：\n#### ${answer}` }
   }
   const [answer, context] = await qa.callQuery(question)
-  return { status: true, message: `相关片段：\n${context} \n\n 回答如下：\n${answer}` }
+  return { status: true, message: `## 相关片段(内容太少，片段可能重复较多)：\n#### ${context} \n\n## 回答如下：\n#### ${answer}` }
 }
 
 const storage = multer.diskStorage({
@@ -177,7 +186,7 @@ const storage = multer.diskStorage({
     // 获取当前模块所在目录的上上一级目录
     const username = userSqlAuth(req, null)
 
-    const parentDir = path.join(__dirname, '../../')
+    const parentDir = path.join(__dirname, '../')
     // 拼接出cache目录的路径
     const cacheDir = path.join(parentDir, 'data', 'fileread', username)
 
@@ -195,6 +204,18 @@ const storage = multer.diskStorage({
 export const m_upload = multer.default({
   storage,
   limits: {
-    fileSize: 100 * 1024,
+    fileSize: 1 * 1024 * 1024,
   },
-}).single('file')
+})
+
+export const clearUserFileCache = (username: string) => {
+  qaCache.delete(username)
+  // 获取当前模块所在目录的上上一级目录
+  const parentDir = path.join(__dirname, '../')
+  // 拼接出cache目录的路径
+  const cacheDir = path.join(parentDir, 'data', 'fileread', username)
+
+  const fileEmbeddingPath = path.join(cacheDir, 'embed')
+  if (fs.existsSync(fileEmbeddingPath))
+    fs.rmSync(fileEmbeddingPath)
+}

@@ -67,7 +67,8 @@ function isActive(uuid: number) {
             @click="handleSelect(item)"
           >
             <span>
-              <SvgIcon icon="ri:message-3-line" />
+              <SvgIcon v-if="item.isFile" icon="ic:outline-upload-file" />
+              <SvgIcon v-else icon="ri:message-3-line" />
             </span>
             <div class="relative flex-1 overflow-hidden break-all text-ellipsis whitespace-nowrap">
               <NInput

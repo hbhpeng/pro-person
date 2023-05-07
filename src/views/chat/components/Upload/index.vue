@@ -34,8 +34,8 @@ export default {
         return
       }
       const size = (state.file as any).size
-      if (size > 100 * 1024) {
-        ms.error('文件大小不得超过100kb')
+      if (size > 1 * 1024 * 1024) {
+        ms.error('文件大小不得超过1M')
         return
       }
 
@@ -79,7 +79,7 @@ export default {
 
 <template>
   <div class="container">
-    <span style="font-size: 12px;">请保证文件文字可读，并且不超过100kb</span>
+    <span style="font-size: 12px;">请保证文件文字可读，并且不超过1M</span>
     <div v-if="exsitFile" class="exist-file-container">
       <span class="file-span">{{ exsitFile }}</span>
       <button class="upload-bt" @click="reUploadFile">

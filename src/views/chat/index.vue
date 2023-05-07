@@ -80,6 +80,7 @@ const receiveMessage = (content: string) => {
       requestOptions: { prompt: content, options: null },
     },
   )
+  scrollToBottom()
 }
 
 async function onConversation() {
