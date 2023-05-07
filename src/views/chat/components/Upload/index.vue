@@ -79,7 +79,7 @@ export default {
 
 <template>
   <div class="container">
-    <span style="font-size: 12px;">请保证文件文字可读，并且不超过1M</span>
+    <span style="font-size: 12px;">请保证文件文字可读，并且不超过1M。同时还要保证剩余字数大于1万</span>
     <div v-if="exsitFile" class="exist-file-container">
       <span class="file-span">{{ exsitFile }}</span>
       <button class="upload-bt" @click="reUploadFile">

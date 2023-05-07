@@ -108,7 +108,7 @@ class HPFileQA {
       maximum -= lens[i]
       if (maximum < 0) {
         // 超过最大长度，截断到前${i + 1}个片段
-        context = context.slice(0, i + 1)
+        context = context.slice(0, i)
         break
       }
     }
@@ -143,7 +143,7 @@ export async function queryFileQuestion(username: string, question: string) {
   if (qaCache.has(username)) {
     const qa = qaCache.get(username) as HPFileQA
     const [answer, context] = await qa.callQuery(question)
-    return { status: true, message: `## 相关片段：\n#### ${context} \n\n## 回答如下：\n#### ${answer}` }
+    return { status: true, message: `## 回答如下：\n#### ${answer}` }
   }
   // 获取当前模块所在目录的上上一级目录
   const parentDir = path.join(__dirname, '../')
@@ -175,10 +175,10 @@ export async function queryFileQuestion(username: string, question: string) {
   qaCache.set(username, qa)
   if (!question) {
     const [answer] = await qa.callQuery('所有的内容做个总结')
-    return { status: true, message: `## 总结如下：\n#### ${answer}` }
+    return { status: true, message: `## 总结如下：\n${answer}` }
   }
   const [answer, context] = await qa.callQuery(question)
-  return { status: true, message: `## 相关片段(内容太少，片段可能重复较多)：\n#### ${context} \n\n## 回答如下：\n#### ${answer}` }
+  return { status: true, message: `## 回答如下：\n#### ${answer}` }
 }
 
 const storage = multer.diskStorage({
