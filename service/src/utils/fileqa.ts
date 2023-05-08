@@ -2,10 +2,12 @@ import fs from 'fs'
 import path from 'path'
 import { Configuration, OpenAIApi } from 'openai'
 // import { promisify } from 'util'
-import KDTree from 'kd-tree-javascript'
+import hnswlib from 'hnswlib-node'
 import QuickLRU from 'quick-lru'
 import * as multer from 'multer'
 import { userSqlAuth } from '../middleware/auth'
+
+const { HierarchicalNSW } = hnswlib
 
 export interface FileReadStatus {
   status: boolean
@@ -32,7 +34,7 @@ export const createEmbeddings = async (input: any) => {
     const embedding = await openai.createEmbedding({ input: inputSlice, model: 'text-embedding-ada-002' }).then((res) => {
       return res.data
     })
-    return [inputSlice.map((text, index) => [text, embedding[index].embedding]), embedding.usage.total_tokens]
+    return [inputSlice.map((text, index) => [text, embedding.data[index].embedding]), embedding.usage.total_tokens]
   }
 
   for (let index = 0; index < lens.length; index++) {
@@ -63,22 +65,20 @@ const createEmbedding = async (text) => {
 }
 
 class HPFileQA {
-  private index: KDTree.kdTree<any>
+  private index: typeof HierarchicalNSW
   private data: any[]
   constructor(dataEmbe) {
-    const embeddings = dataEmbe.map(item => item[1])
+    const index = new HierarchicalNSW('l2', 1536)
+    const maxElements = 500
+    index.initIndex(maxElements)
+
+    const embeddings: any[] = dataEmbe.map(item => item[1])
     const data = dataEmbe.map(item => item[0])
 
-    // 将数据转换为K-d Tree所需的格式（每个元素都是{x,y}对象）
-    const treeData = embeddings.map((embedding, i) => {
-      return { i, x: embedding }
-    })
+    for (let i = 0; i < maxElements && i < embeddings.length; i++)
+      index.addPoint(embeddings[i], i)
 
-    // 创建K-d Tree
-    const CreateKDTree = KDTree.kdTree
-    const kdTree = new CreateKDTree(treeData, euclideanDist, ['x'])
-
-    this.index = kdTree
+    this.index = index
     this.data = data
   }
 
@@ -91,13 +91,12 @@ class HPFileQA {
 
   getTexts(embeding, limit) {
     const k = Math.min(this.data.length, limit)
-    const result = this.index.nearest({ x: embeding }, k)
+    const result = this.index.searchKnn(embeding, k)
 
     const context = []
-    for (const item of result) {
-      const index = item[0].i
+    for (const index of result.neighbors)
       context.push(...this.data.slice(index, index + 5))
-    }
+
     return context
   }
 
@@ -134,16 +133,16 @@ class HPFileQA {
  * @param {Object} p1 第一个向量（格式必须是{x,y}对象）
  * @param {Object} p2 第二个向量（格式必须是{x,y}对象）
  */
-function euclideanDist(p1: any, p2: any) {
-  const s = Object.keys(p1).reduce((sum, key) => sum + (p1[key] - p2[key]) ** 2, 0)
-  return Math.sqrt(s)
-}
+// function euclideanDist(p1: any, p2: any) {
+//   const s = Object.keys(p1).reduce((sum, key) => sum + (p1[key] - p2[key]) ** 2, 0)
+//   return Math.sqrt(s)
+// }
 
 export async function queryFileQuestion(username: string, question: string) {
   if (qaCache.has(username)) {
     const qa = qaCache.get(username) as HPFileQA
     const [answer, context] = await qa.callQuery(question)
-    return { status: true, message: `## 回答如下：\n#### ${answer}` }
+    return { status: true, message: `## 相关片段：\n${context}\n\n## 回答如下：\n#### ${answer}` }
   }
   // 获取当前模块所在目录的上上一级目录
   const parentDir = path.join(__dirname, '../')
@@ -178,7 +177,7 @@ export async function queryFileQuestion(username: string, question: string) {
     return { status: true, message: `## 总结如下：\n${answer}` }
   }
   const [answer, context] = await qa.callQuery(question)
-  return { status: true, message: `## 回答如下：\n#### ${answer}` }
+  return { status: true, message: `## 相关片段：\n${context}\n\n## 回答如下：\n#### ${answer}` }
 }
 
 const storage = multer.diskStorage({

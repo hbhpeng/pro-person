@@ -26,6 +26,8 @@ COPY /service/package.json /app
 
 COPY /service/pnpm-lock.yaml /app
 
+RUN apk add python3 py3-pip make g++
+
 RUN pnpm install
 
 COPY /service /app
@@ -43,6 +45,8 @@ COPY /service/package.json /app
 
 COPY /service/pnpm-lock.yaml /app
 
+RUN apk add python3 py3-pip make g++
+
 RUN pnpm install --production && rm -rf /root/.npm /root/.pnpm-store /usr/local/share/.cache /tmp/*
 
 COPY /service /app
@@ -50,8 +54,6 @@ COPY /service /app
 COPY --from=frontend /app/dist /app/public
 
 COPY --from=backend /app/build /app/build
-
-RUN apk add python3 py3-pip make g++
 
 RUN python3 -m pip install openai icrawler python-pptx
 
