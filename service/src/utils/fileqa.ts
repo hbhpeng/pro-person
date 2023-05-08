@@ -30,9 +30,9 @@ export const createEmbeddings = async (input: any) => {
 
   const getEmbedding = async (inputSlice: any[]) => {
     const embedding = await openai.createEmbedding({ input: inputSlice, model: 'text-embedding-ada-002' }).then((res) => {
-      return res.data.data
+      return res.data
     })
-    return [inputSlice.map((text, index) => [text, embedding[index].embedding]), embedding.length]
+    return [inputSlice.map((text, index) => [text, embedding[index].embedding]), embedding.usage.total_tokens]
   }
 
   for (let index = 0; index < lens.length; index++) {
