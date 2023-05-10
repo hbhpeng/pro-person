@@ -48,6 +48,18 @@ const routes: RouteRecordRaw[] = [
     name: 'preview',
     component: () => import('@/components/common/Preview/index.vue'),
   },
+
+  {
+    path: '/moreview',
+    name: 'morev',
+    component: () => import('@/views/more/index.vue'),
+  },
+
+  {
+    path: '/more/charts',
+    name: 'more.chart',
+    component: () => import('@/views/more/charts/index.vue'),
+  },
 ]
 
 export const router = createRouter({

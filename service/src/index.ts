@@ -13,7 +13,7 @@ import { addPasswordToFile, removePasswordFromFile } from './utils/store'
 import { compareTime } from './utils/dateAuth'
 import { addOrUpdateUserInfo, getUserInfo, getUserInfoPage, registerUser, removeUserInfo, validateUser, verifyAdmin, verifyUser } from './utils/sql'
 import type { UserInfo } from './utils/sql'
-import { clearUserFileCache, m_upload, queryFileQuestion } from './utils/fileqa'
+import { askToGenerateChart, clearUserFileCache, m_upload, queryFileQuestion } from './utils/fileqa'
 import type { FileReadStatus } from './utils/fileqa'
 
 // queryFileQuestion('hbhpeng', '变量是什么').then((result) => {
@@ -409,6 +409,27 @@ router.post('/file/askquestion', async (req, res) => {
   catch (error) {
     // res.send({ status: 'Fail', message: '操作失败', data: '' })
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/generate-chart', async (req, res) => {
+  try {
+    const username = userSqlAuth(req, res)
+    if (!username) {
+      res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+      return
+    }
+    const { prompt } = req.body as { prompt: string }
+    await chatCheck(req, res, prompt, 500)
+    // console.log(prompt)
+    const chartConfig = await askToGenerateChart(prompt)
+    res.write(JSON.stringify({ success: true, chartConfig }))
+  }
+  catch (error) {
+    res.write(JSON.stringify({ success: false, message: 'Error generating chart configuration.' }))
   }
   finally {
     res.end()

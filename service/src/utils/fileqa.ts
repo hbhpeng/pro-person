@@ -218,3 +218,31 @@ export const clearUserFileCache = (username: string) => {
   if (fs.existsSync(fileEmbeddingPath))
     fs.rmSync(fileEmbeddingPath)
 }
+
+export const askToGenerateChart = async (query: string) => {
+  const response = await openai.createChatCompletion({
+    model: 'gpt-3.5-turbo',
+    messages: [{
+      role: 'system', content: `请根据用户提供的内容生成兼容5.2.1版本的ECharts options, 要符合格式的JSON字符串,回复json格式如下:{
+    title: {
+      left: 'center'
+    },
+    tooltip: {
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [],
+    ...
+  }`,
+    },
+    { role: 'user', content: query },
+    ],
+  }).then((res) => {
+    return res.data
+  })
+  // console.log('使用的tokens：', response.choices[0].logprobs.token_logprobs.length);
+
+  return response.choices[0].message.content
+}

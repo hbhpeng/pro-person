@@ -29,6 +29,7 @@ import {
   PromptStore,
   UserInfo,
 } from '@/components/common'
+import { router } from '@/router'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
@@ -126,6 +127,10 @@ watch(
 const showChongZhi = () => {
   window.alert('请联系微信13210119727')
 }
+
+const moreFunctions = () => {
+  router.push({ name: 'morev' })
+}
 </script>
 
 <template>
@@ -146,6 +151,11 @@ const showChongZhi = () => {
         </div>
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
+        </div>
+        <div class="p-1">
+          <NButton block @click="moreFunctions">
+            更多功能
+          </NButton>
         </div>
         <div class="p-1">
           <NButton block @click="show = true">
