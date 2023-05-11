@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import { SvgIcon } from '@/components/common'
 import { router } from '@/router'
 
-const responsiveCols = ref(3)
+// const responsiveCols = ref(3)
 const categories = ref([
   '分类1',
   '分类2',
@@ -29,18 +29,18 @@ const data = ref([
 ])
 const currentCategory = ref('分类1')
 const currentData = ref([
-  { title: '数据1', image: 'image1.png', span: 2 },
-  { title: '数据2', image: 'image2.png', span: 2 },
-  { title: '数据3', image: 'image3.png', span: 2 },
+  { title: '数据1', image: 'image1.png' },
+  { title: '数据2', image: 'image2.png' },
+  { title: '数据3', image: 'image3.png' },
 ])
 
-function handleTabClick(category) {
+function handleTabClick(category: string) {
   const index = categories.value.indexOf(category)
   currentCategory.value = category
   currentData.value = data.value[index]
 }
 
-function handleCardClick() {
+function handleCardClick(item: any) {
   router.push({ name: 'more.chart' })
 }
 </script>

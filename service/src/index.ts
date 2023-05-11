@@ -423,13 +423,12 @@ router.post('/generate-chart', async (req, res) => {
       return
     }
     const { prompt } = req.body as { prompt: string }
-    await chatCheck(req, res, prompt, 500)
-    // console.log(prompt)
+    await chatCheck(req, res, prompt, 0.5)
     const chartConfig = await askToGenerateChart(prompt)
     res.write(JSON.stringify({ success: true, chartConfig }))
   }
   catch (error) {
-    res.write(JSON.stringify({ success: false, message: 'Error generating chart configuration.' }))
+    res.write(JSON.stringify({ success: false, message: '出了点小错误，请稍后再试吧' }))
   }
   finally {
     res.end()
