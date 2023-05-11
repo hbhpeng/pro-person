@@ -6,6 +6,8 @@ import {
 import {
   NDropdown,
 } from 'naive-ui'
+import MarkdownIt from 'markdown-it'
+import ExcelJS from 'exceljs'
 import AvatarComponent from './Avatar.vue'
 import TextComponent from './Text.vue'
 import {
@@ -90,10 +92,105 @@ const options = computed(() => {
     })
   }
 
+  if (isHaveTableContent()) {
+    common.push({
+      label: '导出excel',
+      key: 'exportExcelType',
+      icon: iconRender({
+        icon: 'ph:export',
+      }),
+    })
+  }
+
   return common
 })
 
-function handleSelect(key: 'copyText' | 'appendCopyText' | 'delete' | 'toggleRenderType') {
+function isHaveTableContent() {
+  const regex = /\s*\|.*\|\s*\n\s*\|.*\|\s*\n/
+  const matches = props.text?.match(regex)
+  if (matches)
+    return true
+  return false
+}
+
+function parseTableNextState(state: 'begin' | 'thead' | 'tbody' | 'end') {
+  switch (state) {
+    case 'begin':
+      return 'thead'
+    case 'thead':
+      return 'tbody'
+    case 'tbody':
+      return 'end'
+    default:
+      return 'end'
+  }
+}
+
+function exportTableToExcel() {
+  const mdi = new MarkdownIt()
+  const tokens = mdi.parse(props.text ?? '', {})
+  const headArray = []
+  const bodyArray = []
+  let currentState: 'begin' | 'thead' | 'tbody' | 'end' = 'begin'
+  let currentBodyRow: any[] = []
+  for (const token of tokens) {
+    if (currentState === 'begin' && token.type === 'thead_open') {
+      currentState = parseTableNextState(currentState)
+    }
+    else if (currentState === 'thead' && token.type === 'inline') {
+      // 解析 head
+      headArray.push({
+        header: token.content,
+        key: `key${headArray.length}`,
+        width: 20,
+      })
+    }
+    else if (currentState === 'thead' && token.type === 'tbody_open') {
+      currentState = parseTableNextState(currentState)
+    }
+    else if (currentState === 'tbody' && token.type === 'tr_open') {
+      // 解析 body
+      currentBodyRow = []
+      bodyArray.push(currentBodyRow)
+    }
+    else if (currentState === 'tbody' && token.type === 'inline') {
+      // 解析body row
+      currentBodyRow.push(token.content)
+    }
+    else if (token.type === 'table_close') {
+      currentState = 'end'
+      break
+    }
+  }
+  const bodySheetArray = []
+  for (const body of bodyArray) {
+    const bodyRow = {}
+    body.forEach((value, index) => {
+      bodyRow[`key${index}`] = value
+    })
+    bodySheetArray.push(bodyRow)
+  }
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet('Sheet1')
+  worksheet.columns = headArray as any
+  worksheet.addRows(bodySheetArray)
+  workbook.xlsx.writeBuffer().then((buffer) => {
+    // 下载文件
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'table.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    URL.revokeObjectURL(url)
+    document.body.removeChild(link)
+  })
+}
+
+function handleSelect(key: 'copyText' | 'appendCopyText' | 'delete' | 'toggleRenderType' | 'exportExcelType') {
   switch (key) {
     case 'copyText':
       copyText({
@@ -107,6 +204,9 @@ function handleSelect(key: 'copyText' | 'appendCopyText' | 'delete' | 'toggleRen
       appendCopyText({
         text: props.text ?? '',
       })
+      return
+    case 'exportExcelType':
+      exportTableToExcel()
       return
     case 'delete':
       emit('delete')
