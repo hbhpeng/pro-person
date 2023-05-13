@@ -1,7 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { AdminLayout } from '@/views/admin/constant'
 // import { DashboardOutlined } from '@vicons/antd';
-// import { renderIcon } from '@/utils/index';
+import { renderIcon } from '@/utils/functions/index'
 
 const routeName = 'dashboard'
 
@@ -23,7 +23,7 @@ const routes: Array<RouteRecordRaw> = [
     component: AdminLayout,
     meta: {
       title: '工作台',
-      icon: 'material-symbols:home',
+      icon: renderIcon('material-symbols:home'),
       permissions: ['dashboard_workplace'],
       sort: 0,
     },

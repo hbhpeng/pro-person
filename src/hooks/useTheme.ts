@@ -22,7 +22,7 @@ export function useTheme() {
   const themeOverrides = computed<GlobalThemeOverrides>(() => {
     return {
       common: {
-        // primaryColor: '#6AA1E7'
+        primaryColor: '#6AA1E7',
         primaryColorHover: '#6AA1E7',
         primaryColorPressed: '#6AA1E7',
         textColor: '#6AA1E7',
@@ -46,6 +46,11 @@ export function useTheme() {
         tabTextColorActiveLine: '#6AA1E7',
         tabTextColorHoverLine: '#6AA1E7',
         barColor: '#6AA1E7',
+      },
+      Menu: {
+        itemTextColor: '#BBBBBB',
+        itemIconColor: '#BBBBBB',
+        arrowColor: '#BBBBBB',
       },
     }
   })
