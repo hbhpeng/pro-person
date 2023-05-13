@@ -3,12 +3,16 @@ import { useRoute, useRouter } from 'vue-router'
 import { defineEmits, ref, unref } from 'vue'
 import { NAvatar, NDropdown } from 'naive-ui'
 import { SvgIcon } from '@/components/common'
+import { useAuthStoreWithout } from '@/store/modules/auth'
 
 defineProps({
   collapsed: Boolean,
 })
 
 const emit = defineEmits<Emit>()
+
+const authStore = useAuthStoreWithout()
+
 interface Emit {
   (e: 'update:collapsed', collapsed: boolean): void
 }
@@ -28,6 +32,11 @@ avatarOptions.value = [
   },
 ]
 
+function doLogout() {
+  authStore.removeAdminT()
+  router.push({ name: 'Root' })
+}
+
 // 刷新页面
 const reloadPage = () => {
   router.push({
@@ -39,7 +48,7 @@ const reloadPage = () => {
 const avatarSelect = (key: any) => {
   switch (key) {
     case 1:
-      router.push({ name: 'Setting' })
+      router.push({ name: 'admin_personal' })
       break
     case 2:
       doLogout()

@@ -10,7 +10,7 @@ export function setupPageGuard(router: Router) {
     const adminToken = authStore.$state.adminToken
     if (adminToken) {
       if (to.name === 'admin') {
-        next({ name: 'user' })
+        next({ name: 'dashboard' })
         return
       }
     }
