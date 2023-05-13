@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { emit } from 'process'
+import { defineProps, reactive, ref, watch } from 'vue'
 import { NMenu } from 'naive-ui'
 import { useRoute, useRouter } from 'vue-router'
 import { asyncRoutes } from '@/router/index'
+
+defineProps({
+  collapsed: Boolean,
+})
 
 const menus = ref<any[]>([])
 menus.value = generatorMenu(asyncRoutes)
@@ -25,6 +30,7 @@ function generatorMenu(routerMap: Array<any>) {
     return currentMenu
   })
 }
+
 // 当前路由
 const currentRoute = useRoute()
 const router = useRouter()
@@ -36,13 +42,30 @@ const getOpenKeys = (matched && matched.length) ? matched.map(item => item.name)
 const state = reactive({
   openKeys: getOpenKeys,
 })
+
+watch(
+  () => currentRoute.fullPath,
+  () => {
+    updateMenu()
+  },
+)
+
+// 点击菜单
+function clickMenuItem(key: string) {
+  if (/http(s)?:/.test(key))
+    window.open(key)
+  else
+    router.push({ name: key })
+
+  emit('clickMenuItem' as any, key)
+}
 </script>
 
 <template>
   <NMenu
     :options="menus"
     :inverted="false"
-    :mode="mode"
+    mode="vertical"
     :collapsed="collapsed"
     :collapsed-width="64"
     :collapsed-icon-size="20"

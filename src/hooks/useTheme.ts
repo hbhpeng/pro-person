@@ -51,6 +51,7 @@ export function useTheme() {
         itemTextColor: '#BBBBBB',
         itemIconColor: '#BBBBBB',
         arrowColor: '#BBBBBB',
+        itemIconColorCollapsed: '#BBBBBB',
       },
     }
   })
