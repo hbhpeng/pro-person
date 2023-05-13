@@ -115,15 +115,12 @@ align-items: center;
 display: flex;
 align-items: center;
 margin-right: 20px;
+}
 
 .avatar {
 display: flex;
 align-items: center;
 height: 64px;
-}
-
->* {
 cursor: pointer;
-}
 }
 </style>
