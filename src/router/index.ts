@@ -5,6 +5,8 @@ import { setupPageGuard } from './permission'
 import type { IModuleType } from './types'
 import { ChatLayout } from '@/views/chat/layout'
 
+const RedirectName = 'Redirect'
+
 const modules = import.meta.glob<IModuleType>('./modules/**/*.ts', { eager: true })
 const routeModuleList: RouteRecordRaw[] = Object.keys(modules).reduce((list: any, key: any) => {
   const mod = modules[key].default ?? {}
@@ -76,11 +78,34 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+export const RedirectRoute: RouteRecordRaw = {
+  path: '/redirect',
+  name: RedirectName,
+  component: () => import('@/views/admin/layout/index.vue'),
+  meta: {
+    title: RedirectName,
+    hideBreadcrumb: true,
+  },
+  children: [
+    {
+      path: '/redirect/:path(.*)',
+      name: RedirectName,
+      component: () => import('@/router/redirect/index.vue'),
+      meta: {
+        title: RedirectName,
+        hideBreadcrumb: true,
+      },
+    },
+  ],
+}
+
 export const router = createRouter({
   history: createWebHashHistory(),
   routes,
   scrollBehavior: () => ({ left: 0, top: 0 }),
 })
+// 添加跳转
+router.addRoute(RedirectRoute)
 
 setupPageGuard(router)
 

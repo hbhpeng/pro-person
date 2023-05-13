@@ -18,7 +18,6 @@ export default defineComponent({
 <template>
   <RouterView>
     <template #default="{ Component, route }">
-      12312312
       <transition name="zoom-fade" mode="out-in" appear>
         <component :is="Component" :key="route.fullPath" />
       </transition>

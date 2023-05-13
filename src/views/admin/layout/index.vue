@@ -118,7 +118,6 @@ onMounted(() => {
         >
           <div
             class="main-view noMultiTabs" :class="{
-              'main-view-fix': fixedMulti,
               'mt-3': !isMultiTabs,
             }"
           >

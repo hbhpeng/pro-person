@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { emit } from 'process'
-import { defineProps, reactive, ref, watch } from 'vue'
+import { computed, defineEmits, defineProps, reactive, ref, unref, watch } from 'vue'
 import { NMenu } from 'naive-ui'
 import { useRoute, useRouter } from 'vue-router'
 import { asyncRoutes } from '@/router/index'
@@ -9,6 +8,10 @@ defineProps({
   collapsed: Boolean,
 })
 
+const emit = defineEmits<Emit>()
+interface Emit {
+  (e: 'clickMenuItem', key: any): void
+}
 const menus = ref<any[]>([])
 menus.value = generatorMenu(asyncRoutes)
 
@@ -34,6 +37,7 @@ function generatorMenu(routerMap: Array<any>) {
 // 当前路由
 const currentRoute = useRoute()
 const router = useRouter()
+const selectedKeys = ref<string>(currentRoute.name as string)
 // 获取当前打开的子菜单
 const matched = currentRoute.matched
 
@@ -43,12 +47,23 @@ const state = reactive({
   openKeys: getOpenKeys,
 })
 
+const getSelectedKeys = computed(() => {
+  return unref(selectedKeys)
+})
+
 watch(
   () => currentRoute.fullPath,
   () => {
-    updateMenu()
+    updateSelectedKeys()
   },
 )
+
+function updateSelectedKeys() {
+  const matched = currentRoute.matched
+  state.openKeys = matched.map(item => item.name)
+  const activeMenu: string = (currentRoute.meta?.activeMenu as string) || ''
+  selectedKeys.value = activeMenu ? (activeMenu as string) : (currentRoute.name as string)
+}
 
 // 点击菜单
 function clickMenuItem(key: string) {
@@ -59,20 +74,31 @@ function clickMenuItem(key: string) {
 
   emit('clickMenuItem' as any, key)
 }
+// 展开菜单
+function menuExpanded(openKeys: string[]) {
+  if (!openKeys)
+    return
+  const latestOpenKey = openKeys.find(key => !state.openKeys.includes(key))
+  const isExistChildren = findChildrenLen(latestOpenKey as string)
+  state.openKeys = isExistChildren ? (latestOpenKey ? [latestOpenKey] : []) : openKeys as any
+}
+// 查找是否存在子路由
+function findChildrenLen(key: string) {
+  if (!key)
+    return false
+  const subRouteChildren: string[] = []
+  for (const { children, key } of unref(menus)) {
+    if (children && children.length)
+      subRouteChildren.push(key as string)
+  }
+  return subRouteChildren.includes(key)
+}
 </script>
 
 <template>
   <NMenu
-    :options="menus"
-    :inverted="false"
-    mode="vertical"
-    :collapsed="collapsed"
-    :collapsed-width="64"
-    :collapsed-icon-size="20"
-    :indent="24"
-    :expanded-keys="openKeys"
-    :value="getSelectedKeys"
-    @update:value="clickMenuItem"
-    @update:expanded-keys="menuExpanded"
+    :options="menus" :inverted="false" mode="vertical" :collapsed="collapsed" :collapsed-width="64"
+    :collapsed-icon-size="20" :indent="24" :expanded-keys="state.openKeys" :value="getSelectedKeys"
+    @update:value="clickMenuItem" @update:expanded-keys="menuExpanded"
   />
 </template>
