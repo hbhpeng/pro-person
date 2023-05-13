@@ -78,7 +78,7 @@ export default {
 </script>
 
 <template>
-  <div class="container">
+  <div class="upload-container">
     <span style="font-size: 12px;">请保证文件文字可读，并且不超过1M。同时还要保证剩余字数大于1万</span>
     <div v-if="exsitFile" class="exist-file-container">
       <span class="file-span">{{ exsitFile }}</span>
@@ -99,7 +99,7 @@ export default {
 </template>
 
 <style>
-.container {
+.upload-container {
 display: flex;
 flex-direction: column;
 align-items: center;

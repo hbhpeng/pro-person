@@ -1,8 +1,10 @@
 import { spawn } from 'child_process'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
 import express from 'express'
 import midjourney from 'midjourney-client'
+import xmlparser from 'express-xml-bodyparser'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
 import { chatConfig, chatReplyProcess, currentModel, initChatGPTApi } from './chatgpt'
@@ -29,6 +31,7 @@ let isExpire = false
 
 app.use(express.static('public'))
 app.use(express.json())
+app.use(xmlparser())
 
 app.all('*', (_, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
@@ -429,6 +432,51 @@ router.post('/generate-chart', async (req, res) => {
   }
   catch (error) {
     res.write(JSON.stringify({ success: false, message: '出了点小错误，请稍后再试吧' }))
+  }
+  finally {
+    res.end()
+  }
+})
+
+// 微信模块
+router.get('/wx', (req, res) => {
+  try {
+    const signature = req.query.signature
+    const timestamp = req.query.timestamp
+    const nonce = req.query.nonce
+    const echostr = req.query.echostr
+    const token = 'jhyuanyouyuankeji' // 请按照公众平台官网\基本配置中信息填写
+    const arr = [token, timestamp, nonce]
+    arr.sort()
+
+    const sha1 = crypto.createHash('sha1')
+    sha1.update(arr.join(''))
+
+    const hashcode = sha1.digest('hex')
+
+    // console.log(`handle/GET func: hashcode, signature: ${hashcode}, ${signature}`);
+
+    if (hashcode === signature)
+      res.write(echostr)
+
+    else
+      res.write('')
+  }
+  catch (error) {
+    res.write('')
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/wx', (req, res) => {
+  try {
+    const xmlData = req.body.xml
+    // console.log(xmlData)
+  }
+  catch (error) {
+    res.write('')
   }
   finally {
     res.end()

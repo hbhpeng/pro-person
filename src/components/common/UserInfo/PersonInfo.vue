@@ -79,7 +79,7 @@ const loginOut = () => {
         <p>总字数：{{ totalChars }}万</p>
         <p>可用字数：{{ (totalChars - usedChars) * 10000 }}</p>
         <p>已用字数：{{ usedChars }}万</p>
-        <button type="submit" @click.prevent="loginOut">
+        <button class="person-info" type="submit" @click.prevent="loginOut">
           退出登录
         </button>
       </div>
@@ -124,7 +124,7 @@ button {
 margin-top: 1rem;
 }
 
-button[type='submit'] {
+button[type='submit'].person-info {
 width: 100%;
 margin-top: 20px;
 padding: 5px;

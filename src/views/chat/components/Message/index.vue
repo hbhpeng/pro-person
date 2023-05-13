@@ -164,7 +164,7 @@ function exportTableToExcel() {
   }
   const bodySheetArray = []
   for (const body of bodyArray) {
-    const bodyRow = {}
+    const bodyRow = {} as any
     body.forEach((value, index) => {
       bodyRow[`key${index}`] = value
     })

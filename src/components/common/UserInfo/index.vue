@@ -137,20 +137,20 @@ const registerAction = async () => {
   <div v-if="showModal" class="modal">
     <NSpin :show="loading">
       <div class="modal-content">
-        <button class="close-button" @click="closeModal">
+        <button class="close-button user-info" @click="closeModal">
           X
         </button>
 
         <div v-if="loginFormVisible">
           <!-- <h2>登录</h2> -->
-          <form>
-            <label for="email">账号:</label>
-            <input id="email" v-model="username" type="email" name="email" placeholder="字母、数字和下划线的6-20个字符">
+          <form class="user-info">
+            <label class="user-info" for="email">账号:</label>
+            <input id="email" v-model="username" class="user-info" type="email" name="email" placeholder="字母、数字和下划线的6-20个字符">
 
-            <label for="password">密码:</label>
-            <input id="password" v-model="password" type="password" name="password" placeholder="8-16个字符">
+            <label class="user-info" for="password">密码:</label>
+            <input id="password" v-model="password" class="user-info" type="password" name="password" placeholder="8-16个字符">
 
-            <button type="submit" @click.prevent="loginAction">
+            <button class="user-info" type="submit" @click.prevent="loginAction">
               立即登录
             </button>
           </form>
@@ -160,19 +160,24 @@ const registerAction = async () => {
 
         <div v-if="registerFormVisible">
           <h2>注册</h2>
-          <form>
-            <label for="email">账号:</label>
-            <input id="email" v-model="username" type="email" name="email" placeholder="字母、数字和下划线的6-20个字符">
+          <form class="user-info">
+            <label class="user-info" for="email">账号:</label>
+            <input id="email" v-model="username" class="user-info" type="email" name="email" placeholder="字母、数字和下划线的6-20个字符">
 
-            <label for="password">密码:</label>
-            <input id="password" v-model="password" type="password" name="password" placeholder="8-16个字符">
+            <label class="user-info" for="password">密码:</label>
+            <input id="password" v-model="password" class="user-info" type="password" name="password" placeholder="8-16个字符">
 
-            <button type="submit" @click.prevent="registerAction">
+            <button class="user-info" type="submit" @click.prevent="registerAction">
               立即注册并登录
             </button>
           </form>
 
-          <p>已经有账户? <a class="tap-a" href="#" @click.prevent="showLoginForm">立即登录!</a></p>
+          <p class="user-info">
+            已经有账户? <a class="tap-a user-info" href="#" @click.prevent="showLoginForm">立即登录!</a>
+          </p>
+        </div>
+        <div>
+          <img src="/src/assets/wechat_login.jpg" alt="">
         </div>
       </div>
     </NSpin>
@@ -213,18 +218,18 @@ padding: 0.5rem;
 cursor: pointer;
 }
 
-form {
+form.user-info {
 display: flex;
 flex-direction: column;
 margin-top: 1rem;
 }
 
-label {
+label.user-info {
 font-weight: bold;
 margin-bottom: 0.25rem;
 }
 
-button[type='submit'] {
+button[type='submit'].user-info {
 padding: 10px;
 background-color: #6AA1E7;
 border-radius: 5px;
@@ -240,9 +245,9 @@ cursor: pointer;
 /* 鼠标悬浮时更改光标形状 */
 }
 
-input[type="email"],
-input[type="password"],
-input[type="text"] {
+input[type="email"].user-info,
+input[type="password"].user-info,
+input[type="text"].user-info {
 padding: 0.5rem;
 margin-bottom: 1rem;
 /* border: none; */
