@@ -48,7 +48,7 @@ const reloadPage = () => {
 const avatarSelect = (key: any) => {
   switch (key) {
     case 1:
-      router.push({ name: 'admin_personal' })
+      router.push({ name: 'adminconfig_personal' })
       break
     case 2:
       doLogout()

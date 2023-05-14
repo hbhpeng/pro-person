@@ -1,6 +1,7 @@
 import { error } from 'console'
 import type { PoolConnection } from 'mysql2/promise'
 import mysql from 'mysql2/promise'
+import { getTodayDate } from './dateAuth'
 
 export interface UserInfo {
   userid?: number
@@ -25,7 +26,7 @@ const pool = mysql.createPool({
   user: 'houp',
   password: '624634',
   database: 'GPTDatabase',
-  connectionLimit: 10,
+  connectionLimit: 100,
 })
 
 export async function getUserInfoPage(page: number, pageSize: number): Promise<UserInfo[]> {
@@ -107,6 +108,89 @@ export async function verifyAdmin(username: string, password: string) {
       return true
 
     return false
+  }
+  catch (error) {
+    // console.error(`Error querying database: ${error.stack}`)
+    // throw error
+    return false
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function deleteOpenApiKey(key: string) {
+  const sql = 'delete from GPTAiKey where aikey = ?'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    await connection.execute(sql, [key])
+    return true
+  }
+  catch (error) {
+    // console.error(`Error querying database: ${error.stack}`)
+    // throw error
+    return false
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function databaseApiKeys() {
+  const sql = 'SELECT id, aikey, enddate FROM GPTAiKey'
+
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [result] = await connection.query(sql) as any
+    const data = result.map((row: any) => ({
+      id: row.id,
+      key: row.aikey,
+      lastmodify: row.enddate,
+    }))
+    return data
+  }
+  finally {
+    connection.release()
+  }
+}
+
+async function updatCurrentKey() {
+  const date = await getTodayDate()
+  const currentkey = process.env.OPENAI_API_KEY
+  const sql = `UPDATE GPTAiKey SET enddate = '${date}' WHERE aikey = '${currentkey}'`
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    await connection.query(sql)
+    return connection
+  }
+  catch (error) {
+    // console.error(`Error querying database: ${error.stack}`)
+    connection.release()
+    throw error
+  }
+}
+
+export async function changeDatabaseApiKey(key: string) {
+  if (!key)
+    return false
+  const sqlExist = `SELECT COUNT(*) AS count FROM GPTAiKey WHERE aikey = '${key}'`
+  const connection: PoolConnection = await updatCurrentKey()
+  try {
+    const [result] = await connection.query(sqlExist)
+    const count = (result[0] as any).count
+    const date = await getTodayDate()
+    if (count > 0) {
+      const sqlUpdate = `UPDATE GPTAiKey SET begindate = '${date}' WHERE aikey = '${key}'`
+      await connection.query(sqlUpdate)
+    }
+    else {
+      const sqlInsert = `INSERT INTO GPTAiKey (aikey, begindate) VALUES ('${key}', '${date}')`
+      await connection.query(sqlInsert)
+    }
+    return true
   }
   catch (error) {
     // console.error(`Error querying database: ${error.stack}`)

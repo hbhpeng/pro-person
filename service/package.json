@@ -36,6 +36,7 @@
     "isomorphic-fetch": "^3.0.0",
     "jsonwebtoken": "^9.0.0",
     "midjourney-client": "^1.0.8",
+    "moment": "^2.29.4",
     "multer": "1.4.5-lts.1",
     "mysql2": "^3.2.3",
     "node-fetch": "^3.3.0",

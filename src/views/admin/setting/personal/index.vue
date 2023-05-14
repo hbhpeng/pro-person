@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NButton, NCard, NForm, NFormItem, NInput, NSpace, useMessage } from 'naive-ui'
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 const message = useMessage()
 const formRef: any = ref(null)
@@ -10,17 +10,17 @@ const rules = {
     message: '请输入用户名',
     trigger: 'blur',
   },
-  oldpassword: {
+  oldpw: {
     required: true,
     message: '请输入旧密码',
     trigger: 'blur',
   },
-  newpassword: {
+  newpw: {
     required: true,
     message: '请输入新密码',
     trigger: 'blur',
   },
-  repeatpassword: {
+  reppw: {
     required: true,
     message: '请再输一次密码',
     trigger: 'input',
@@ -42,6 +42,10 @@ function formSubmit() {
       message.error('验证失败，请填写完整信息')
   })
 }
+
+const canSubmit = computed(() => {
+  return formValue.oldpw && formValue.name && formValue.newpw && formValue.reppw && (formValue.newpw === formValue.reppw)
+})
 </script>
 
 <template>
@@ -52,20 +56,20 @@ function formSubmit() {
           <NInput v-model:value="formValue.name" placeholder="请输入用户名" />
         </NFormItem>
 
-        <NFormItem label="旧密码" path="oldpassword">
+        <NFormItem label="旧密码" path="oldpw">
           <NInput v-model:value="formValue.oldpw" type="password" placeholder="请输入旧密码" />
         </NFormItem>
 
-        <NFormItem label="新密码" path="newpassword">
+        <NFormItem label="新密码" path="newpw">
           <NInput v-model:value="formValue.newpw" type="password" placeholder="请输入新密码" />
         </NFormItem>
-        <NFormItem label="重复密码" path="repeatpassword">
-          <NInput v-model:value="formValue.reppw" type="password" placeholder="请再次密码" />
+        <NFormItem label="重复密码" path="reppw">
+          <NInput v-model:value="formValue.reppw" type="password" placeholder="请再次输入密码" />
         </NFormItem>
 
         <div>
           <NSpace>
-            <NButton type="primary" @click="formSubmit">
+            <NButton :disabled="!canSubmit" @click="formSubmit">
               更新密码
             </NButton>
           </NSpace>

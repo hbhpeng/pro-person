@@ -88,6 +88,19 @@ export function changeOpenApi<T>(apikey: string) {
   })
 }
 
+export function reqOpenApiKeys<T>() {
+  return post<T>({
+    url: '/admin/api/getapikeys',
+  })
+}
+
+export function deleteOpenApi<T>(apikey: string) {
+  return post<T>({
+    url: '/admin/api/deleteapikeys',
+    data: { apikey },
+  })
+}
+
 export function addOrUpdateUserInfo<T>(username: string, password: string, usagecount: number,
   usecount: number, userid: number, admin: string, isupdate: boolean) {
   if (isupdate) {

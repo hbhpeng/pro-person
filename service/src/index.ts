@@ -13,7 +13,7 @@ import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
 import { addPasswordToFile, removePasswordFromFile } from './utils/store'
 import { compareTime } from './utils/dateAuth'
-import { addOrUpdateUserInfo, getUserInfo, getUserInfoPage, registerUser, removeUserInfo, validateUser, verifyAdmin, verifyUser } from './utils/sql'
+import { addOrUpdateUserInfo, changeDatabaseApiKey, databaseApiKeys, deleteOpenApiKey, getUserInfo, getUserInfoPage, registerUser, removeUserInfo, validateUser, verifyAdmin, verifyUser } from './utils/sql'
 import type { UserInfo } from './utils/sql'
 import { askToGenerateChart, clearUserFileCache, m_upload, queryFileQuestion } from './utils/fileqa'
 import type { FileReadStatus } from './utils/fileqa'
@@ -221,15 +221,48 @@ router.post('/admin/login', async (req, res) => {
   }
 })
 
+// about apikey
 router.post('/admin/api/changeapikeys', async (req, res) => {
   try {
     if (!sqlAuth(req, res))
       return
 
     const { apikey } = req.body as { apikey: string }
+    await changeDatabaseApiKey(apikey)
     process.env.OPENAI_API_KEY = apikey
     initChatGPTApi()
     res.send({ status: 'Success', message: '操作成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/admin/api/deleteapikeys', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { apikey } = req.body as { apikey: string }
+    await deleteOpenApiKey(apikey)
+    if (apikey === process.env.OPENAI_API_KEY)
+      process.env.OPENAI_API_KEY = ''
+
+    res.send({ status: 'Success', message: '操作成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/admin/api/getapikeys', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const data = await databaseApiKeys()
+    const result = { usekey: process.env.OPENAI_API_KEY, allkey: data }
+    res.send({ status: 'Success', message: '操作成功', data: JSON.stringify(result) })
   }
   catch (error) {
     res.send({ status: 'Fail', message: '操作失败', data: null })
