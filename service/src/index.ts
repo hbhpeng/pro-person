@@ -13,7 +13,20 @@ import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
 import { addPasswordToFile, removePasswordFromFile } from './utils/store'
 import { compareTime } from './utils/dateAuth'
-import { addOrUpdateUserInfo, changeDatabaseApiKey, databaseApiKeys, deleteOpenApiKey, getUserInfo, getUserInfoPage, registerUser, removeUserInfo, validateUser, verifyAdmin, verifyUser } from './utils/sql'
+import {
+  addOrUpdateUserInfo,
+  changeAdminPassword,
+  changeDatabaseApiKey,
+  databaseApiKeys,
+  deleteOpenApiKey,
+  getUserInfo,
+  getUserInfoPage,
+  registerUser,
+  removeUserInfo,
+  validateUser,
+  verifyAdmin,
+  verifyUser,
+} from './utils/sql'
 import type { UserInfo } from './utils/sql'
 import { askToGenerateChart, clearUserFileCache, m_upload, queryFileQuestion } from './utils/fileqa'
 import type { FileReadStatus } from './utils/fileqa'
@@ -263,6 +276,23 @@ router.post('/admin/api/getapikeys', async (req, res) => {
     const data = await databaseApiKeys()
     const result = { usekey: process.env.OPENAI_API_KEY, allkey: data }
     res.send({ status: 'Success', message: '操作成功', data: JSON.stringify(result) })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/admin/api/changepassword', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { username, oldpw, newpw } = req.body as { username: string; oldpw: string; newpw: string }
+    const success = await changeAdminPassword(username, oldpw, newpw)
+    if (success)
+      res.send({ status: 'Success', message: '密码修改成功', data: '' })
+    else
+      res.send({ status: 'Fail', message: '密码错误', data: '' })
   }
   catch (error) {
     res.send({ status: 'Fail', message: '操作失败', data: null })

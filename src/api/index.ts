@@ -139,6 +139,13 @@ export function adminActionLogin<T>(username: string, password: string) {
   })
 }
 
+export function adminChangePassword<T>(username: string, oldpw: string, newpw: string) {
+  return post<T>({
+    url: '/admin/api/changepassword',
+    data: { username, oldpw, newpw },
+  })
+}
+
 export function getSingleUserInfo<T>() {
   return post<T>({
     url: '/user/getuserinfo',

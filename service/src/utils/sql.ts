@@ -202,6 +202,32 @@ export async function changeDatabaseApiKey(key: string) {
   }
 }
 
+// 管理员修改密码
+export async function changeAdminPassword(username: string, password: string, newpw: string) {
+  const sql = 'SELECT * FROM GPTAdmin where username = ?'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [results] = await connection.query(sql, [username])
+    const [user] = results as UserInfo[]
+    if (user && user.password === password) {
+      const updateSql = `update GPTAdmin set password = '${newpw}' where username ='${username}'`
+      await connection.query(updateSql)
+      return true
+    }
+
+    return false
+  }
+  catch (error) {
+    // console.error(`Error querying database: ${error.stack}`)
+    // throw error
+    return false
+  }
+  finally {
+    connection.release()
+  }
+}
+
 // 用户验证
 export async function verifyUser(username: string, password: string) {
   const sql = 'SELECT * FROM GPTUserInfo where username = ?'

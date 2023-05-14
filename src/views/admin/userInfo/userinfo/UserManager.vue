@@ -175,12 +175,6 @@ export default {
           <SvgIcon icon="ic:baseline-search" />
         </template>
       </NInput>
-      <div>
-        <input v-model="openapi" placeholder="秘钥">
-        <button @click="changeKey">
-          更换
-        </button>
-      </div>
       <div class="form">
         <input v-model="username" placeholder="用户名">
         <input v-model="password" placeholder="用户密码">
