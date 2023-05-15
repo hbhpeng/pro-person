@@ -19,7 +19,7 @@ interface Emit {
 const router = useRouter()
 const route = useRoute()
 
-const avatarOptions = ref([])
+const avatarOptions = ref<any>([])
 
 avatarOptions.value = [
   {

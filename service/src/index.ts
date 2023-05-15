@@ -12,7 +12,7 @@ import { auth, signUser, sqlAuth, userSqlAuth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
 import { addPasswordToFile, removePasswordFromFile } from './utils/store'
-import { compareTime } from './utils/dateAuth'
+// import { compareTime } from './utils/dateAuth'
 import {
   addOrUpdateUserInfo,
   changeAdminPassword,
@@ -23,6 +23,7 @@ import {
   getUserInfoPage,
   registerUser,
   removeUserInfo,
+  userScanLoginWithOpenId,
   validateUser,
   verifyAdmin,
   verifyUser,
@@ -30,6 +31,8 @@ import {
 import type { UserInfo } from './utils/sql'
 import { askToGenerateChart, clearUserFileCache, m_upload, queryFileQuestion } from './utils/fileqa'
 import type { FileReadStatus } from './utils/fileqa'
+import * as redisCache from './utils/redisCache'
+import * as wechatApi from './utils/wechat'
 
 // queryFileQuestion('hbhpeng', '变量是什么').then((result) => {
 
@@ -38,9 +41,12 @@ import type { FileReadStatus } from './utils/fileqa'
 // })
 // console.log(await queryFileQuestion('hbhpeng', '变量是什么'))
 
+wechatApi.startQueryAccessToken()
+// process.env.wechatToken = '68_d6lrtZfzsaY456DmvsT0NbMEjKd35iTIafeLh6-8spXToWvJcE4sedS0mJLiZ4C5mSm5lFFphetVB5WeoTvWmDdZ8xyr9yr3s0GNeG-0ltQlPW5-Xz6VjfV3o_EOZUeACAALG'
+
 const app = express()
-const router = express.Router()
-let isExpire = false
+export const router = express.Router()
+const isExpire = false
 
 app.use(express.static('public'))
 app.use(express.json())
@@ -142,11 +148,15 @@ router.post('/removePasswd', auth, async (req, res) => {
 
 router.post('/session', async (req, res) => {
   try {
-    const EXPIRE_DATE_TIME = process.env.EXPIRE_DATE_TIME
-    isExpire = await compareTime(EXPIRE_DATE_TIME)
+    // const EXPIRE_DATE_TIME = process.env.EXPIRE_DATE_TIME
+    // isExpire = await compareTime(EXPIRE_DATE_TIME)
     const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
     const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
-    res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel() } })
+    let sessionid = req.headers.sessionid as string
+    if (!(sessionid && redisCache.hasSessionId(sessionid)))
+      sessionid = redisCache.createAndCacheSessionId()
+
+    res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel(), sessionid } })
   }
   catch (error) {
     res.send({ status: 'Fail', message: error.message, data: null })
@@ -533,15 +543,83 @@ router.get('/wx', (req, res) => {
   }
 })
 
-router.post('/wx', (req, res) => {
+router.post('/wx', async (req, res) => {
   try {
     const xmlData = req.body.xml
     // console.log(xmlData)
+    if (xmlData.msgtype.includes('event')) {
+      switch (xmlData.event[0]) {
+        case 'subscribe': {
+          const scence_str = xmlData.eventkey[0]
+          // console.log(scence_str)
+          if (scence_str && scence_str.startsWith('qrscene_')) {
+            const result = scence_str.replace(/^qrscene_/i, '')
+            const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0])
+            redisCache.loginedWithSessionId(result, username)
+          }
+          break
+        }
+        case 'SCAN': {
+          const result = xmlData.eventkey[0]
+          // console.log(result)
+          const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0])
+          redisCache.loginedWithSessionId(result, username)
+          break
+        }
+      }
+    }
   }
   catch (error) {
+    // console.log(error)
     res.write('')
   }
   finally {
+    res.end()
+  }
+})
+
+router.get('/user/loginwximage', async (req, res) => {
+  const sessionid = req.headers.sessionid as string
+  try {
+    if (sessionid && redisCache.loginCheckSessionId(sessionid)) {
+      const url = await wechatApi.getWechatOfficialQrcode(sessionid)
+      if (url)
+        res.send({ status: 'Success', message: url, data: JSON.stringify({ url }) })
+
+      else
+        throw new Error('请重新刷新页面')
+    }
+    else {
+      throw new Error('请重新刷新页面')
+    }
+  }
+  catch (error) {
+    // console.log(error)
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.get('/user/islogin', async (req, res) => {
+  const sessionid = req.headers.sessionid as string
+  // res.send({ status: 'Success', message: '登录成功', data: JSON.stringify({ token: signUser(username) }) })
+  try {
+    if (sessionid) {
+      const userInfo = redisCache.getValueWithSessionId(sessionid) as any
+      // console.log('userInfo' + userInfo)
+      if (userInfo.islogin === 2 && userInfo.username)
+        res.send({ status: 'Success', message: '登录成功', data: JSON.stringify({ token: signUser(userInfo.username) }) })
+
+      else
+        throw new Error('请重新刷新页面')
+    }
+    else {
+      throw new Error('请重新刷新页面')
+    }
+  }
+  catch (error) {
     res.end()
   }
 })

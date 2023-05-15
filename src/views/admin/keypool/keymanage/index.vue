@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NButton, NCard, NEllipsis, NInput, NSpace, NSpin, NTable, useMessage } from 'naive-ui'
+import { NButton, NCard, NEllipsis, NInput, NSpace, NSpin, NTable, useDialog, useMessage } from 'naive-ui'
 import { ref } from 'vue'
 import moment from 'moment'
 import {
@@ -18,13 +18,14 @@ const loading = ref(false)
 const ms = useMessage()
 const openapi = ref('')
 const currentOpenapi = ref('')
+const dialog = useDialog()
 
 async function requestKeys() {
   loading.value = true
   try {
     const { data } = await reqOpenApiKeys() as { data: any }
     const dataObject = JSON.parse(data)
-    keystores.value = (dataObject.allkey as any).map((value) => {
+    keystores.value = (dataObject.allkey as any).map((value: any) => {
       value.lastmodify = moment(value.lastmodify).format('YYYY-MM-DD HH:mm:ss')
       return value
     })
@@ -73,13 +74,7 @@ const enableKey = async (keystore: KeyStoreType) => {
   changeKeyWithParam(keystore.key)
 }
 
-const deleteKey = async (keystore: KeyStoreType) => {
-  if (keystore.key === currentOpenapi.value) {
-    const result = confirm('这个秘钥是当前正在使用的秘钥，确定要删除吗？')
-    if (result !== true)
-      return
-  }
-
+async function realDeleteKey(keystore: KeyStoreType) {
   loading.value = true
   try {
     const {
@@ -96,6 +91,21 @@ const deleteKey = async (keystore: KeyStoreType) => {
   finally {
     loading.value = false
   }
+}
+
+const deleteKey = async (keystore: KeyStoreType) => {
+  if (keystore.key === currentOpenapi.value) {
+    dialog.warning({
+      title: '警告',
+      content: '这个秘钥是当前正在使用的秘钥，确定要删除吗？',
+      positiveText: '确定',
+      negativeText: '不确定',
+      onPositiveClick: () => {
+        realDeleteKey(keystore)
+      },
+    })
+  }
+  realDeleteKey(keystore)
 }
 </script>
 

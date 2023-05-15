@@ -8,13 +8,19 @@ import {
   ref,
   watch,
 } from 'vue'
+import QRCode from 'qrcode'
 import {
   useAuthStoreWithout,
 } from '@/store/modules/auth'
 import {
+  getUserLoginWxImage,
   userActionLogin,
   userActionRegist,
+  userWithScanIsLogin,
 } from '@/api'
+import {
+  SvgIcon,
+} from '@/components/common'
 
 const props = defineProps < Props > ()
 
@@ -42,13 +48,72 @@ const username = ref('')
 const password = ref('')
 const ms = useMessage()
 const loading = ref(false)
+// 1：二维码 2：账号密码
+const loginType = ref(1)
+const qrcodeRef = ref(null)
+const qrcodeDataUrl = ref('')
+let queryCount = 0
+
+const startQueryLoginInfo = async () => {
+  try {
+    queryCount++
+    const {
+      data,
+    } = await userWithScanIsLogin()
+    const {
+      token,
+    } = JSON.parse(data as any)
+    showModal.value = false
+    authStore.$state.userToken = token
+    authStore.setUserT(token)
+    ms.success('登录成功')
+  }
+  catch {
+    if (showModal.value && queryCount < 300 && loginType.value === 1)
+      setTimeout(startQueryLoginInfo, 1000)
+  }
+}
+
+const getLoginWxImage = async () => {
+  loading.value = true
+  try {
+    const {
+      message: url,
+    } = await getUserLoginWxImage()
+    // @ts-expect-error library need
+    QRCode.toDataURL(url, {
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+    }, (err, url: string) => {
+      if (!err)
+        qrcodeDataUrl.value = url
+      else
+        qrcodeDataUrl.value = ''
+    })
+
+    // 开始轮询
+    queryCount = 0
+    startQueryLoginInfo()
+  }
+  catch (error: any) {
+    loginType.value = 2
+  }
+  finally {
+    loading.value = false
+  }
+}
 
 watch(
   () => showModal,
   (value) => {
-    if (value) {
+    if (value.value) {
       username.value = ''
       password.value = ''
+      loginType.value = 1
+      queryCount = 0
+      getLoginWxImage()
     }
   }, {
     deep: true,
@@ -74,12 +139,12 @@ const showRegisterForm = () => {
 }
 
 const validateUsername = (name: string) => {
-  const regex = /^[a-zA-Z0-9_]{6,20}$/ // 匹配包含字母、数字和下划线的6-20个字符
+  const regex = /^[a-zA-Z0-9_]{6,24}$/ // 匹配包含字母、数字和下划线的6-20个字符
   return regex.test(name)
 }
 
 const validatePassword = (mima: string) => {
-  const regex = /^[a-zA-Z0-9!@#\$%\^\&*\)\(+=._-]{8,16}$/ // 匹配包含大写字母、小写字母、数字和特殊字符的8-16个字符
+  const regex = /^[a-zA-Z0-9!@#\$%\^\&*\)\(+=._-]{8,20}$/ // 匹配包含大写字母、小写字母、数字和特殊字符的8-16个字符
   return regex.test(mima)
 }
 
@@ -124,12 +189,30 @@ const loginOrRegister = async (isLogin: boolean) => {
 }
 
 const loginAction = async () => {
-  if (validateCanNext())
-    loginOrRegister(true)
+  if (!username.value) {
+    ms.warning('请输入用户名')
+    return
+  }
+  if (!password.value) {
+    ms.warning('请输入密码')
+    return
+  }
+  loginOrRegister(true)
 }
 const registerAction = async () => {
   if (validateCanNext())
     loginOrRegister(false)
+}
+
+const changeLoginType = () => {
+  if (loginType.value === 1) {
+    loginType.value = 2
+  }
+  else {
+    loginType.value = 1
+    queryCount = 0
+    startQueryLoginInfo()
+  }
 }
 </script>
 
@@ -137,18 +220,34 @@ const registerAction = async () => {
   <div v-if="showModal" class="modal">
     <NSpin :show="loading">
       <div class="modal-content">
-        <button class="close-button user-info" @click="closeModal">
-          X
+        <button
+          style="width: 200px;color: blue;position: absolute;left: 50%;transform: translateX(-50%);top: 15px;"
+          @click="changeLoginType"
+        >
+          <span v-if="loginType === 2" style="text-decoration-line: underline;">扫描微信二维码登录</span>
+          <div v-else>
+            <span style="text-decoration-line: underline;">使用账号登录</span><br>
+            <span style="color: gray;">微信扫描二维码自动登录</span>
+          </div>
+        </button>
+        <button class="close-button" @click="closeModal">
+          <SvgIcon icon="ic:baseline-close" />
         </button>
 
-        <div v-if="loginFormVisible">
+        <div v-if="loginFormVisible && loginType === 2">
           <!-- <h2>登录</h2> -->
           <form class="user-info">
             <label class="user-info" for="email">账号:</label>
-            <input id="email" v-model="username" class="user-info" type="email" name="email" placeholder="字母、数字和下划线的6-20个字符">
+            <input
+              id="email" v-model="username" class="user-info" type="email" name="email"
+              placeholder="字母、数字和下划线的6-24个字符"
+            >
 
             <label class="user-info" for="password">密码:</label>
-            <input id="password" v-model="password" class="user-info" type="password" name="password" placeholder="8-16个字符">
+            <input
+              id="password" v-model="password" class="user-info" type="password" name="password"
+              placeholder="8-20个字符"
+            >
 
             <button class="user-info" type="submit" @click.prevent="loginAction">
               立即登录
@@ -158,14 +257,20 @@ const registerAction = async () => {
           <p>没有账号? <a class="tap-a" href="#" @click.prevent="showRegisterForm">现在注册!</a></p>
         </div>
 
-        <div v-if="registerFormVisible">
+        <div v-else-if="registerFormVisible && loginType === 2">
           <h2>注册</h2>
           <form class="user-info">
             <label class="user-info" for="email">账号:</label>
-            <input id="email" v-model="username" class="user-info" type="email" name="email" placeholder="字母、数字和下划线的6-20个字符">
+            <input
+              id="email" v-model="username" class="user-info" type="email" name="email"
+              placeholder="字母、数字和下划线的6-20个字符"
+            >
 
             <label class="user-info" for="password">密码:</label>
-            <input id="password" v-model="password" class="user-info" type="password" name="password" placeholder="8-16个字符">
+            <input
+              id="password" v-model="password" class="user-info" type="password" name="password"
+              placeholder="8-16个字符"
+            >
 
             <button class="user-info" type="submit" @click.prevent="registerAction">
               立即注册并登录
@@ -176,8 +281,8 @@ const registerAction = async () => {
             已经有账户? <a class="tap-a user-info" href="#" @click.prevent="showLoginForm">立即登录!</a>
           </p>
         </div>
-        <div>
-          <img src="/src/assets/wechat_login.jpg" alt="">
+        <div v-else ref="qrcodeRef" class="scan-code-container" style="margin-top: 20px;">
+          <img ref="qrcodeRef" style="width: 250px;height: 250px;" :src="qrcodeDataUrl" alt="...">
         </div>
       </div>
     </NSpin>
@@ -234,6 +339,7 @@ padding: 10px;
 background-color: #6AA1E7;
 border-radius: 5px;
 margin-bottom: 5px;
+color: white;
 }
 
 a.tap-a {
@@ -251,7 +357,7 @@ input[type="text"].user-info {
 padding: 0.5rem;
 margin-bottom: 1rem;
 /* border: none; */
-border: 0.125rem solid gray;
+border: 0.1rem solid gray;
 border-radius: 5px;
 }
 

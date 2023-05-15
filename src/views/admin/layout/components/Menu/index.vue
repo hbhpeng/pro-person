@@ -41,7 +41,7 @@ const selectedKeys = ref<string>(currentRoute.name as string)
 // 获取当前打开的子菜单
 const matched = currentRoute.matched
 
-const getOpenKeys = (matched && matched.length) ? matched.map(item => item.name) : []
+const getOpenKeys = ((matched && matched.length) ? matched.map(item => item.name) : []) as any
 
 const state = reactive({
   openKeys: getOpenKeys,

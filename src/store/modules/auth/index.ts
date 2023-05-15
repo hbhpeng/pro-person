@@ -2,10 +2,12 @@ import { defineStore } from 'pinia'
 import { getAdmainToken, getToken, getUserToken, removeAdmainToken, removeToken, removeUserToken, setAdmainToken, setToken, setUserToken } from './helper'
 import { store } from '@/store'
 import { fetchSession } from '@/api'
+import { ss } from '@/utils/storage'
 
 interface SessionResponse {
   auth: boolean
   model: 'ChatGPTAPI' | 'ChatGPTUnofficialProxyAPI'
+  sessionid: string
 }
 
 export interface AuthState {
@@ -13,6 +15,7 @@ export interface AuthState {
   session: SessionResponse | null
   userToken: string | undefined
   adminToken: string | undefined
+  sessionid: string | undefined
 }
 
 export const useAuthStore = defineStore('auth-store', {
@@ -21,6 +24,7 @@ export const useAuthStore = defineStore('auth-store', {
     session: null,
     userToken: getUserToken(),
     adminToken: getAdmainToken(),
+    sessionid: ss.get('sessionid'),
   }),
 
   getters: {
@@ -34,6 +38,8 @@ export const useAuthStore = defineStore('auth-store', {
       try {
         const { data } = await fetchSession<SessionResponse>()
         this.session = { ...data }
+        if (this.session?.sessionid)
+          ss.set('sessionid', this.session?.sessionid)
         return Promise.resolve(data)
       }
       catch (error) {

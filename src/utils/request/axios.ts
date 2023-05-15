@@ -19,6 +19,10 @@ service.interceptors.request.use(
     if (userToken)
       config.headers.userToken = userToken
 
+    const sessionid = useAuthStore().sessionid
+    if (sessionid)
+      config.headers.sessionid = sessionid
+
     return config
   },
   (error) => {

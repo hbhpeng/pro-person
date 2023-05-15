@@ -1,5 +1,5 @@
 import type { AxiosProgressEvent, GenericAbortSignal } from 'axios'
-import { post } from '@/utils/request'
+import { get, post } from '@/utils/request'
 import { useAuthStore, useSettingStore } from '@/store'
 
 export function fetchChatAPI<T = any>(
@@ -160,10 +160,22 @@ export function userActionLogin<T>(username: string, password: string) {
   })
 }
 
+export function userWithScanIsLogin<T>() {
+  return get<T>({
+    url: '/user/islogin',
+  })
+}
+
 export function userActionRegist<T>(username: string, password: string) {
   return post<T>({
     url: '/user/register',
     data: { username, password },
+  })
+}
+
+export function getUserLoginWxImage<T>() {
+  return get<T>({
+    url: '/user/loginwximage',
   })
 }
 

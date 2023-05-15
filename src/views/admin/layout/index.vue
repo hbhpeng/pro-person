@@ -35,9 +35,9 @@ const {
   isMobile,
 } = useBasicLayout()
 
-const fixedHeader = ref('absolute')
+const fixedHeader = ref<any>('absolute')
 
-const fixedMenu = ref('absolute')
+const fixedMenu = ref<any>('absolute')
 
 const isMultiTabs = ref(false)
 

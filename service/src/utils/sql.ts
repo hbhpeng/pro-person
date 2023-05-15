@@ -11,6 +11,9 @@ export interface UserInfo {
   usecount: number
   usageword: number
   useword: number
+  openid?: string
+  isVip: number
+  vipendday?: string
 }
 
 interface AdminInfo {
@@ -19,9 +22,27 @@ interface AdminInfo {
   password: string
 }
 
+// 生成随机字符串
+function randomString(length) {
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = ''
+  for (let i = 0; i < length; i++)
+    result += charset.charAt(Math.floor(Math.random() * charset.length))
+
+  return result
+}
+
+// 格式化日期
+function formatDate(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}${month}${day}`
+}
+
 const pool = mysql.createPool({
-  // host: 'mysql',
-  host: 'localhost',
+  host: 'mysql',
+  // host: 'localhost',
   port: 3306,
   user: 'houp',
   password: '624634',
@@ -245,6 +266,34 @@ export async function verifyUser(username: string, password: string) {
     // console.error(`Error querying database: ${error.stack}`)
     // throw error
     return false
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function userScanLoginWithOpenId(openId: string) {
+  const querySql = `SELECT * FROM GPTUserInfo where openid = '${openId}'`
+  let connection: PoolConnection
+  try {
+    if (!openId)
+      throw new Error('用户不合法')
+    connection = await pool.getConnection()
+    const [results] = await connection.query(querySql)
+    const [user] = results as UserInfo[]
+    const date = await getTodayDate()
+    if (!user) {
+      // 插入一条数据
+      // 生成随机用户名和密码
+      const usernamePrefix = 'user_'
+      const passwordLength = 9
+      const username = `${usernamePrefix + randomString(10)}_${formatDate(new Date())}`
+      const password = randomString(passwordLength)
+      const insertSql = 'INSERT INTO GPTUserInfo (username, password, openid, lastlogin, createtime) VALUES (?, ?, ?, ?, ?)'
+      await connection.query(insertSql, [username, password, openId, date, date])
+      return { username }
+    }
+    return user
   }
   finally {
     connection.release()
