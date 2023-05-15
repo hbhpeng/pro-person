@@ -53,3 +53,6 @@ export function isMap<T extends Map<any, any>>(value: T | unknown): value is T {
 export function isFile<T extends File>(value: T | unknown): value is T {
   return Object.prototype.toString.call(value) === '[object File]'
 }
+export function isNullOrUnDef(val: unknown): val is null | undefined {
+  return isUndefined(val) || isNull(val)
+}
