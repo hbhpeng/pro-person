@@ -23,7 +23,7 @@ const routes: Array<RouteRecordRaw> = [
     component: AdminLayout,
     meta: {
       title: '秘钥管理',
-      icon: renderIcon('material-symbols:home'),
+      icon: renderIcon('ic:baseline-key'),
       permissions: ['aikey_manage'],
       sort: 4,
     },

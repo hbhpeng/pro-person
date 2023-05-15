@@ -1,18 +1,11 @@
 import type { App } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { setupPageGuard } from './permission'
-import type { IModuleType } from './types'
+import { routeModuleList, setupPageGuard } from './permission'
+// import type { IModuleType } from './types'
 import { ChatLayout } from '@/views/chat/layout'
 
 const RedirectName = 'Redirect'
-
-const modules = import.meta.glob<IModuleType>('./modules/**/*.ts', { eager: true })
-const routeModuleList: RouteRecordRaw[] = Object.keys(modules).reduce((list: any, key: any) => {
-  const mod = modules[key].default ?? {}
-  const modList = Array.isArray(mod) ? [...mod] : [mod]
-  return [...list, ...modList]
-}, [])
 
 function sortRoute(a: any, b: any) {
   return (a.meta?.sort ?? 0) - (b.meta?.sort ?? 0)
@@ -39,6 +32,11 @@ const routes: RouteRecordRaw[] = [
     path: '/404',
     name: '404',
     component: () => import('@/views/exception/404/index.vue'),
+  },
+  {
+    path: '/500',
+    name: '500',
+    component: () => import('@/views/exception/500/index.vue'),
   },
 
   {

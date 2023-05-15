@@ -1,4 +1,5 @@
 import NTPClient from 'ntp-client'
+import moment from 'moment'
 
 // 获取当前时间
 async function getCurrentTime() {
@@ -24,4 +25,8 @@ export async function compareTime(targetTimeStr: string) {
     return true
   else
     return false
+}
+
+export async function getTodayDate() {
+  return moment().format('YYYY-MM-DD HH:mm:ss')
 }

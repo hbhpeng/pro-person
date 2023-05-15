@@ -12,6 +12,7 @@ import {
   deleteUserInfo,
   getUserInfo,
 } from '@/api'
+import { SvgIcon } from '@/components/common'
 
 export default {
   components: {
@@ -19,6 +20,7 @@ export default {
     NTable,
     NCard,
     NInput,
+    SvgIcon,
   },
   data() {
     return {
@@ -168,20 +170,20 @@ export default {
 <template>
   <NSpin :show="loading">
     <div class="container">
-      <NInput v-model:value="queryname" placeholder="用户名查询" />
-      <div>
-        <input v-model="openapi" placeholder="秘钥">
-        <button @click="changeKey">
-          更换
-        </button>
-      </div>
+      <NInput v-model:value="queryname" placeholder="输入用户名查询">
+        <template #suffix>
+          <SvgIcon icon="ic:baseline-search" />
+        </template>
+      </NInput>
       <div class="form">
         <input v-model="username" placeholder="用户名">
         <input v-model="password" placeholder="用户密码">
-        <span style="margin-top: 5px;">总字数(单位万)：</span><input
-          v-model.number="usagecount" placeholder="使用次数"
-          type="number"
-        >
+        <div>
+          <span style="margin-top: 5px;">总字数(单位万)：</span><input
+            v-model.number="usagecount" placeholder="使用次数"
+            type="number"
+          >
+        </div>
         <button @click="addUser">
           添加用户
         </button>
@@ -193,7 +195,7 @@ export default {
         size="small"
         :segmented="{ content: true }"
       >
-        <NTable :bordered="false" :single-line="false">
+        <NTable :bordered="true" :single-line="false">
           <thead>
             <tr>
               <th>用户名</th>

@@ -23,7 +23,7 @@ const routes: Array<RouteRecordRaw> = [
     component: AdminLayout,
     meta: {
       title: '设置页面',
-      icon: renderIcon('material-symbols:home'),
+      icon: renderIcon('eos-icons:admin'),
       permissions: ['adminconfig_personal'],
       sort: 5,
     },

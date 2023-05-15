@@ -23,7 +23,7 @@ const routes: Array<RouteRecordRaw> = [
     component: AdminLayout,
     meta: {
       title: '用户套餐',
-      icon: renderIcon('material-symbols:home'),
+      icon: renderIcon('mdi:package-outline'),
       permissions: ['package_manage'],
       sort: 3,
     },

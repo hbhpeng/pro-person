@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { NCol, NIcon, NRow, NStatistic } from 'naive-ui'
-import { IosBulb, MdSave } from '@vicons/ionicons4'
+import { NCol, NRow, NStatistic } from 'naive-ui'
 import VisiTab from './components/VisiTab.vue'
+import { SvgIcon } from '@/components/common'
 
 // const statisticData = [
 //   {
@@ -29,9 +29,7 @@ import VisiTab from './components/VisiTab.vue'
         <NCol :span="12">
           <NStatistic label="统计数据" :value="99">
             <template #prefix>
-              <NIcon>
-                <MdSave />
-              </NIcon>
+              <SvgIcon icon="fontisto:preview" />
             </template>
             <template #suffix>
               / 100
@@ -43,9 +41,7 @@ import VisiTab from './components/VisiTab.vue'
         <NCol :span="12">
           <NStatistic label="统计数据" :value="99">
             <template #prefix>
-              <NIcon>
-                <IosBulb />
-              </NIcon>
+              <SvgIcon icon="fontisto:preview" />
             </template>
             <template #suffix>
               / 100
@@ -57,9 +53,7 @@ import VisiTab from './components/VisiTab.vue'
         <NCol :span="12">
           <NStatistic label="统计数据" :value="99">
             <template #prefix>
-              <NIcon>
-                <MdSave />
-              </NIcon>
+              <SvgIcon icon="fontisto:preview" />
             </template>
             <template #suffix>
               / 100

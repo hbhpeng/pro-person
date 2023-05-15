@@ -36,7 +36,7 @@ function http<T = any>(
       authStore.removeToken()
       window.location.reload()
     }
-    if (typeof res.data.data === 'string') {
+    if (typeof res.data.data === 'string' && res.data.data.length > 0) {
       const innerData: any = JSON.parse(res.data.data as string)
       if (innerData.status === '2') {
         authStore.removeAdminT()

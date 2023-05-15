@@ -1,5 +1,5 @@
 import type { AxiosProgressEvent, GenericAbortSignal } from 'axios'
-import { post } from '@/utils/request'
+import { get, post } from '@/utils/request'
 import { useAuthStore, useSettingStore } from '@/store'
 
 export function fetchChatAPI<T = any>(
@@ -88,6 +88,19 @@ export function changeOpenApi<T>(apikey: string) {
   })
 }
 
+export function reqOpenApiKeys<T>() {
+  return post<T>({
+    url: '/admin/api/getapikeys',
+  })
+}
+
+export function deleteOpenApi<T>(apikey: string) {
+  return post<T>({
+    url: '/admin/api/deleteapikeys',
+    data: { apikey },
+  })
+}
+
 export function addOrUpdateUserInfo<T>(username: string, password: string, usagecount: number,
   usecount: number, userid: number, admin: string, isupdate: boolean) {
   if (isupdate) {
@@ -126,6 +139,13 @@ export function adminActionLogin<T>(username: string, password: string) {
   })
 }
 
+export function adminChangePassword<T>(username: string, oldpw: string, newpw: string) {
+  return post<T>({
+    url: '/admin/api/changepassword',
+    data: { username, oldpw, newpw },
+  })
+}
+
 export function getSingleUserInfo<T>() {
   return post<T>({
     url: '/user/getuserinfo',
@@ -140,10 +160,22 @@ export function userActionLogin<T>(username: string, password: string) {
   })
 }
 
+export function userWithScanIsLogin<T>() {
+  return get<T>({
+    url: '/user/islogin',
+  })
+}
+
 export function userActionRegist<T>(username: string, password: string) {
   return post<T>({
     url: '/user/register',
     data: { username, password },
+  })
+}
+
+export function getUserLoginWxImage<T>() {
+  return get<T>({
+    url: '/user/loginwximage',
   })
 }
 

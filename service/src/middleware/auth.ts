@@ -25,25 +25,22 @@ const auth = async (req, res, next) => {
 const sqlAuth = (req, res) => {
   // const { username } = req.body as UserInfo
   const token = req.headers.admintoken
-  let isAuth = false
+  let isAuth = ''
   if (token) {
     jwt.verify(token, secret, (error, decoded) => {
       const tokenFlag = error?.name
       if (tokenFlag === 'TokenExpiredError' || tokenFlag === 'JsonWebTokenError')
-        isAuth = false
+        isAuth = ''
 
       else
-        isAuth = true
+        isAuth = decoded.username
     })
   }
-  else {
-    isAuth = false
-  }
   if (isAuth)
-    return true
+    return isAuth
 
   res.send({ status: 'Fail', message: '权限失效，请尝试重新登陆', data: JSON.stringify({ status: '2' }) })
-  return false
+  return ''
 }
 
 const signUser = (username) => {

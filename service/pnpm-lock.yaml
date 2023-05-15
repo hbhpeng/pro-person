@@ -37,6 +37,9 @@ dependencies:
   midjourney-client:
     specifier: ^1.0.8
     version: 1.0.8
+  moment:
+    specifier: ^2.29.4
+    version: 2.29.4
   multer:
     specifier: 1.4.5-lts.1
     version: 1.4.5-lts.1
@@ -2852,6 +2855,10 @@ packages:
     hasBin: true
     dependencies:
       minimist: 1.2.8
+    dev: false
+
+  /moment@2.29.4:
+    resolution: {integrity: sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==}
     dev: false
 
   /ms@2.0.0:
