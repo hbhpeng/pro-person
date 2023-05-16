@@ -25,7 +25,9 @@ import {
 } from '@/hooks/useBasicLayout'
 import {
   MakePPT,
+  OrderQrcode,
   PersonInfo,
+  ProductPay,
   PromptStore,
   UserInfo,
 } from '@/components/common'
@@ -44,6 +46,8 @@ const loginBtShow = ref(false)
 const loginVwShow = ref(false)
 const personVwShow = ref(false)
 const aiPPTShow = ref(false)
+const payShow = ref(false)
+const orderImgShow = ref(false)
 
 if (!userToken)
   loginBtShow.value = true
@@ -125,7 +129,13 @@ watch(
 )
 
 const showChongZhi = () => {
-  window.alert('请联系微信13210119727')
+  // window.alert('请联系微信13210119727')
+  payShow.value = true
+}
+
+const createOrder = () => {
+  payShow.value = false
+  orderImgShow.value = true
 }
 
 const moreFunctions = () => {
@@ -193,4 +203,6 @@ const moreFunctions = () => {
   <UserInfo v-model:visible="loginVwShow" />
   <PersonInfo v-model:visible="personVwShow" />
   <MakePPT v-model:visible="aiPPTShow" />
+  <ProductPay v-model:visible="payShow" @create-order="createOrder" />
+  <OrderQrcode v-model:visible="orderImgShow" />
 </template>

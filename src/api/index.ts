@@ -166,6 +166,12 @@ export function userWithScanIsLogin<T>() {
   })
 }
 
+export function userWitchScanPayUrls<T>() {
+  return post<T>({
+    url: '/user/payurl',
+  })
+}
+
 export function userActionRegist<T>(username: string, password: string) {
   return post<T>({
     url: '/user/register',
