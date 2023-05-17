@@ -76,9 +76,9 @@ const loginOut = () => {
           X
         </button>
         <h2>{{ username }} 的详细信息</h2>
-        <p>总字数：{{ totalChars }}万</p>
-        <p>可用字数：{{ (totalChars - usedChars) * 10000 }}</p>
-        <p>已用字数：{{ usedChars }}万</p>
+        <p>总字数：{{ totalChars.toFixed(4).toString() }}万</p>
+        <p>可用字数：{{ parseInt(((totalChars - usedChars) * 10000).toString()).toString() }}</p>
+        <p>已用字数：{{ usedChars.toFixed(4).toString() }}万</p>
         <button class="person-info" type="submit" @click.prevent="loginOut">
           退出登录
         </button>
@@ -131,5 +131,6 @@ padding: 5px;
 background-color: #6AA1E7;
 border-radius: 5px;
 margin-bottom: 5px;
+color: white;
 }
 </style>

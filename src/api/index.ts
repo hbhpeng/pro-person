@@ -172,6 +172,19 @@ export function userWitchScanPayUrls<T>() {
   })
 }
 
+export function userGetProductPayParams<T>() {
+  return post<T>({
+    url: '/user/get_pay_params',
+  })
+}
+
+export function userCheckPayState<T>(orderid: string) {
+  return post<T>({
+    url: '/user/checkpay',
+    data: { orderid },
+  })
+}
+
 export function userActionRegist<T>(username: string, password: string) {
   return post<T>({
     url: '/user/register',

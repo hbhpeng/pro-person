@@ -16,7 +16,7 @@ export interface UserInfo {
   vipendday?: string
 }
 
-export interface UseOrderInfo {
+export interface UserOrderInfo {
   id: number
   username: string
   productid: number
@@ -275,7 +275,7 @@ export async function verifyUser(username: string, password: string) {
     const [results] = await connection.query(sql, [username])
     const [user] = results as UserInfo[]
     if (user && user.password === password)
-      return true
+      return user
 
     return false
   }
@@ -405,9 +405,9 @@ export async function getUserOrderInfoByOrderid(orderid: string, openid: string,
   try {
     connection = await pool.getConnection()
     const [results] = await connection.query(querySql, [queryId, orderid])
-    const [orderInfo] = results as UseOrderInfo[]
+    const [orderInfo] = results as UserOrderInfo[]
     if (orderInfo)
-      return orderInfo as UseOrderInfo
+      return orderInfo as UserOrderInfo
     return null
   }
   catch {
@@ -418,15 +418,21 @@ export async function getUserOrderInfoByOrderid(orderid: string, openid: string,
   }
 }
 
-export async function updateUserOrderInfoByOrderId(openid: string, orderid: string, orderstate: OrderStatus) {
-  const updateSql = 'update GPTUserOrderInfo set orderstate=? where openid=? and orderid=?'
+export async function updateUserOrderInfoByOrderId(username: string, openid: string, orderid: string, orderstate: OrderStatus) {
+  let queryId = openid
+  let updateSql = 'update GPTUserOrderInfo set orderstate=? where openid=? and orderid=?'
+  if (username) {
+    queryId = username
+    updateSql = 'update GPTUserOrderInfo set orderstate=? where username=? and orderid=?'
+  }
+
   let connection: PoolConnection
   try {
     connection = await pool.getConnection()
     const orderinfo = await getUserOrderInfoByOrderid(orderid, openid, '')
 
     if (orderinfo.orderstate !== orderstate) {
-      await connection.query(updateSql, [orderstate, openid, orderid])
+      await connection.query(updateSql, [orderstate, queryId, orderid])
       if (orderstate === OrderStatus.Paid) {
         const updateSql = 'update GPTUserInfo set usagecount = usagecount + 0.001 where openid=?'
         await connection.query(updateSql, [openid])

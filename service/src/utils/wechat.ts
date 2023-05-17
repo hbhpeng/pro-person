@@ -4,6 +4,7 @@ import axios from 'axios'
 import tenpay from 'tenpay'
 import xml2js from 'xml2js'
 
+export const APPTOKEN = 'jhyuanyouyuankeji'
 export const MCHID = '1644083736'
 const partnerV2Key = '31ae470b212fde09afc98G41ccb7ef7z'
 export const APPID = 'wxd7c431bcd85e0e80'
@@ -90,4 +91,25 @@ export const replyPayData = async (message?: string) => {
 
   else
     return new xml2js.Builder(opt).buildObject({ return_code: 'FAIL', return_msg: message })
+}
+
+export const getWechatPayParam = (prepay_id: string) => {
+  // let privatePath = publicPath.replace('apiclient_cert.p12', 'apiclient_key.pem')
+
+  // const appId = APPID
+  // const timeStamp = Date.now()
+  // const nonceStr = uuidv4().slice(0, 8)
+  // const packageStr = `prepay_id=${prepay_id}`
+  // const signType = 'RSA'
+
+  // // 读取私钥文件
+  // const privateKey = fs.readFileSync(privatePath, 'utf8')
+
+  // // 创建签名对象并传入要签名的算法、私钥和待签名的数据
+  // const signer = crypto.createSign('RSA-SHA256');
+  // signer.update(`${appId}\n${timeStamp}\n${nonceStr}\n${packageStr}\n`);
+  // signer.end();
+  // const signature = signer.sign(privateKey, 'base64')
+  // return { appId, timeStamp, nonceStr, packageStr, signType, signature }
+  return payApi.getPayParamsByPrepay({ prepay_id })
 }

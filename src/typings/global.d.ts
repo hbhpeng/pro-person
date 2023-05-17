@@ -5,6 +5,7 @@ interface Window {
   $dialog?: import('naive-ui').DialogProviderInst;
   $message?: import('naive-ui').MessageProviderInst;
   $notification?: import('naive-ui').NotificationProviderInst;
+	WeixinJSBridge: any;
 }
 declare type Nullable<T> = T | null;
 declare type NonNullable<T> = T extends null | undefined ? never : T;

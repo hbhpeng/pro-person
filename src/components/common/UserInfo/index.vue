@@ -1,5 +1,7 @@
 <script setup lang='ts'>
 import {
+  NButton,
+  NEmpty,
   NSpin,
   useMessage,
 } from 'naive-ui'
@@ -282,7 +284,14 @@ const changeLoginType = () => {
           </p>
         </div>
         <div v-else ref="qrcodeRef" class="scan-code-container" style="margin-top: 20px;">
-          <img ref="qrcodeRef" style="width: 250px;height: 250px;" :src="qrcodeDataUrl" alt="...">
+          <img v-if="qrcodeDataUrl" ref="qrcodeRef" style="width: 250px;height: 250px;" :src="qrcodeDataUrl" alt="...">
+          <NEmpty v-else style="width: 250px;margin-top: 40px;" description="oops~获取微信二维码失败,试试账号登录吧">
+            <template #extra>
+              <NButton :loading="loading" size="small" @click="getLoginWxImage">
+                刷新试试
+              </NButton>
+            </template>
+          </NEmpty>
         </div>
       </div>
     </NSpin>

@@ -138,6 +138,12 @@ const createOrder = () => {
   orderImgShow.value = true
 }
 
+const payShouldLogin = () => {
+  payShow.value = false
+  orderImgShow.value = false
+  loginVwShow.value = true
+}
+
 const moreFunctions = () => {
   router.push({ name: 'morev' })
 }
@@ -203,6 +209,6 @@ const moreFunctions = () => {
   <UserInfo v-model:visible="loginVwShow" />
   <PersonInfo v-model:visible="personVwShow" />
   <MakePPT v-model:visible="aiPPTShow" />
-  <ProductPay v-model:visible="payShow" @create-order="createOrder" />
+  <ProductPay v-model:visible="payShow" @create-order="createOrder" @pay-should-login="payShouldLogin" />
   <OrderQrcode v-model:visible="orderImgShow" />
 </template>

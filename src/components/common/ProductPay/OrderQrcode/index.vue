@@ -5,13 +5,16 @@ import {
   watch,
 } from 'vue'
 import {
+  NButton,
   NCard,
   NModal,
   NSpace,
   NSpin,
+  useMessage,
 } from 'naive-ui'
 import QRCode from 'qrcode'
 import {
+  userCheckPayState,
   userWitchScanPayUrls,
 } from '@/api'
 
@@ -36,6 +39,8 @@ interface Props {
 }
 const loading = ref(false)
 const qrcodeDataUrl = ref('')
+const ms = useMessage()
+const orderId = ref('')
 
 const showModal = computed({
   get: () => props.visible,
@@ -47,7 +52,10 @@ const getOrderWxImage = async () => {
   try {
     const {
       message: url,
+      data,
     } = await userWitchScanPayUrls()
+    const result = JSON.parse(data as string)
+    orderId.value = result.orderId
     // @ts-expect-error library need
     QRCode.toDataURL(url, {
       width: 200,
@@ -82,6 +90,19 @@ watch(
     deep: true,
   },
 )
+// const is_weixin = () => {
+// return /MicroMessenger/.test(navigator.userAgent)
+// }
+async function checkIsPay() {
+  try {
+    await userCheckPayState(orderId.value)
+    ms.success('用的开心😁')
+    showModal.value = false
+  }
+  catch (error: any) {
+    ms.error(error.message)
+  }
+}
 </script>
 
 <template>
@@ -89,8 +110,11 @@ watch(
     <NSpin :show="loading">
       <NCard :style="bodyStyle" title="支付" :bordered="false" size="huge" role="dialog" aria-modal="true">
         <NSpace :style="bodyStyle">
-          <div>微信支付</div>
+          <div>打开微信扫一扫完成支付</div>
           <img ref="qrcodeRef" style="width: 250px;height: 250px;" :src="qrcodeDataUrl" alt="...">
+          <NButton type="primary" @click="checkIsPay">
+            我已完成支付
+          </NButton>
         </NSpace>
       </NCard>
     </NSpin>
