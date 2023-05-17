@@ -521,7 +521,7 @@ router.get('/wx', (req, res) => {
     const timestamp = req.query.timestamp
     const nonce = req.query.nonce
     const echostr = req.query.echostr
-    const token = 'jhyuanyouyuankeji' // 请按照公众平台官网\基本配置中信息填写
+    const token = wechatApi.APPTOKEN // 请按照公众平台官网\基本配置中信息填写
     const arr = [token, timestamp, nonce]
     arr.sort()
 
@@ -570,7 +570,11 @@ router.post('/wx', async (req, res) => {
         case 'SCAN': {
           const result = xmlData.eventkey[0]
           // console.log(result)
-          const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0])
+          const cacheInfo = redisCache.getValueWithSessionId(result) as any
+          let existUsername = ''
+          if (cacheInfo && cacheInfo.username)
+            existUsername = cacheInfo.username
+          const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0], existUsername)
           redisCache.loginedWithSessionId(result, username)
           break
         }
@@ -615,7 +619,17 @@ router.get('/user/islogin', async (req, res) => {
   const sessionid = req.headers.sessionid as string
   // res.send({ status: 'Success', message: '登录成功', data: JSON.stringify({ token: signUser(username) }) })
   try {
-    if (sessionid) {
+    const username = userSqlAuth(req, res)
+    if (username) {
+      // 用户已经登录 说明是想看看openid有没有
+      const userInfo = await SqlOperate.getUserInfo(username)
+      if (userInfo && userInfo.openid)
+        res.send({ status: 'Success', message: '绑定成功', data: JSON.stringify({ tokeno: signUser(userInfo.openid) }) })
+
+      else
+        throw new Error('请扫描二维码关注公众号')
+    }
+    else if (sessionid) {
       const userInfo = redisCache.getValueWithSessionId(sessionid) as any
       // console.log('userInfo' + userInfo)
       if (userInfo.islogin === 2 && userInfo.username)
@@ -655,7 +669,7 @@ router.post('/wxpay/notify', async (req, res) => {
       // 查openid out_trade_no 把对应的订单信息改为成功，开通相应产品
       const openid = xmldata.openid[0]
       const out_trade_no = xmldata.out_trade_no[0]
-      await SqlOperate.updateUserOrderInfoByOrderId(openid, out_trade_no, 1)
+      await SqlOperate.updateUserOrderInfoByOrderId('', openid, out_trade_no, SqlOperate.OrderStatus.Paid)
     }
     else {
       // 删除订单? 支付中？支付失败？
@@ -668,14 +682,15 @@ router.post('/wxpay/notify', async (req, res) => {
 })
 
 router.post('/user/payurl', async (req, res) => {
-  const username = userSqlAuth(req, res)
-  if (!username) {
-    res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
-    return
-  }
   // const { question } = req.body as { question: string }
 
   try {
+    const username = userSqlAuth(req, res)
+    if (!username) {
+      res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+      return
+    }
+
     const user: UserInfo = await getUserInfo(username)
     if (!user || !user.openid)
       throw new Error('请先关注或者扫描公众号绑定账号')
@@ -694,9 +709,85 @@ router.post('/user/payurl', async (req, res) => {
     })
 
     if (code_url)
-      res.send({ status: 'Success', message: code_url, data: '' })
+      res.send({ status: 'Success', message: code_url, data: JSON.stringify({ orderId }) })
     else
       throw new Error('请重新刷新页面')
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/user/get_pay_params', async (req, res) => {
+  try {
+    const username = userSqlAuth(req, res)
+    if (!username) {
+      res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+      return
+    }
+
+    const user: UserInfo = await getUserInfo(username)
+    if (!user || !user.openid)
+      throw new Error('请先关注或者扫描公众号绑定账号')
+    const orderId = uuidv4().slice(0, 8) + uuidv4().slice(-8)
+    const productId = '333333'
+    const openid = user.openid
+
+    const result = await wechatApi.payApi.unifiedOrder({
+      out_trade_no: orderId,
+      body: '商品简单描述',
+      total_fee: '1',
+      openid,
+    })
+
+    if (result.result_code !== 'SUCCESS')
+      throw new Error('预支付交易错误')
+
+    await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
+    await SqlOperate.createAnOrderInfo(username, openid, productId, orderId)
+
+    const prepay_id = result.prepay_id
+    const paramData = wechatApi.getWechatPayParam(prepay_id)
+    res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(paramData) })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/user/checkpay', async (req, res) => {
+  try {
+    const username = userSqlAuth(req, res)
+    if (!username) {
+      res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+      return
+    }
+    const { orderid } = req.body as { orderid: string }
+    const orderInfo = await SqlOperate.getUserOrderInfoByOrderid(orderid, '', username)
+    if (orderInfo.orderstate === SqlOperate.OrderStatus.Paid) {
+      res.send({ status: 'Success', message: '成功', data: '' })
+    }
+    else {
+      const result = await wechatApi.payApi.orderQuery({ out_trade_no: orderid })
+      if (result.return_code === 'SUCCESS') {
+        if (result.trade_state === 'SUCCESS') {
+          await SqlOperate.updateUserOrderInfoByOrderId(username, '', orderid, SqlOperate.OrderStatus.Paid)
+          res.send({ status: 'Success', message: '成功', data: '' })
+        }
+        else {
+          res.send({ status: 'Fail', message: '支付未完成', data: '' })
+        }
+      }
+      else {
+        throw new Error('查询订单失败，请稍后重试')
+      }
+    }
   }
   catch (error) {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
