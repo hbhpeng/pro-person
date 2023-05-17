@@ -43,7 +43,10 @@
     "ntp-client": "^0.5.3",
     "openai": "^3.2.1",
     "quick-lru": "^6.1.1",
-    "socks-proxy-agent": "^7.0.0"
+    "socks-proxy-agent": "^7.0.0",
+    "tenpay": "^2.1.18",
+    "uuid": "^9.0.0",
+    "xml2js": "^0.5.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.35.3",

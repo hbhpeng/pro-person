@@ -5,6 +5,7 @@ import crypto from 'crypto'
 import express from 'express'
 import midjourney from 'midjourney-client'
 import xmlparser from 'express-xml-bodyparser'
+import { v4 as uuidv4 } from 'uuid'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
 import { chatConfig, chatReplyProcess, currentModel, initChatGPTApi } from './chatgpt'
@@ -28,6 +29,7 @@ import {
   verifyAdmin,
   verifyUser,
 } from './utils/sql'
+import * as SqlOperate from './utils/sql'
 import type { UserInfo } from './utils/sql'
 import { askToGenerateChart, clearUserFileCache, m_upload, queryFileQuestion } from './utils/fileqa'
 import type { FileReadStatus } from './utils/fileqa'
@@ -82,21 +84,22 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
     await chatCheck(req, res, prompt)
 
     let firstChunk = true
-    let chatString: string
+    let chatString: ChatMessage
     await chatReplyProcess({
       message: prompt,
       lastContext: options,
       process: (chat: ChatMessage) => {
-        chatString = JSON.stringify(chat)
-        res.write(firstChunk ? chatString : `\n${chatString}`)
+        chatString = chat
+        const jsonString = JSON.stringify(chat)
+        res.write(firstChunk ? jsonString : `\n${jsonString}`)
         firstChunk = false
       },
       systemMessage,
       temperature,
       top_p,
     })
-    if (chatString)
-      await chatCheck(req, res, chatString)
+    if (chatString && chatString.text)
+      await chatCheck(req, res, chatString.text)
   }
   catch (error) {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
@@ -554,7 +557,12 @@ router.post('/wx', async (req, res) => {
           // console.log(scence_str)
           if (scence_str && scence_str.startsWith('qrscene_')) {
             const result = scence_str.replace(/^qrscene_/i, '')
-            const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0])
+            const cacheInfo = redisCache.getValueWithSessionId(result) as any
+            let existUsername = ''
+            if (cacheInfo && cacheInfo.username)
+              existUsername = cacheInfo.username
+
+            const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0], existUsername)
             redisCache.loginedWithSessionId(result, username)
           }
           break
@@ -581,7 +589,8 @@ router.post('/wx', async (req, res) => {
 router.get('/user/loginwximage', async (req, res) => {
   const sessionid = req.headers.sessionid as string
   try {
-    if (sessionid && redisCache.loginCheckSessionId(sessionid)) {
+    const username = userSqlAuth(req, res)
+    if (sessionid && redisCache.loginCheckSessionId(sessionid, username)) {
       const url = await wechatApi.getWechatOfficialQrcode(sessionid)
       if (url)
         res.send({ status: 'Success', message: url, data: JSON.stringify({ url }) })
@@ -620,6 +629,79 @@ router.get('/user/islogin', async (req, res) => {
     }
   }
   catch (error) {
+    res.end()
+  }
+})
+
+router.post('/wxpay/notify', async (req, res) => {
+  // let info = req.weixin
+  try {
+    res.header('Content-Type', 'application/xml; charset=utf-8')
+    const xmldata = req.body.xml
+    // 业务逻辑...
+    if (xmldata.return_code[0] === 'SUCCESS') {
+      if (xmldata.appid[0] !== wechatApi.APPID || xmldata.mch_id[0] !== wechatApi.MCHID)
+        throw new Error('商户信息错误')
+
+      // trade_state
+      // SUCCESS：支付成功
+      // REFUND：转入退款
+      // NOTPAY：未支付
+      // CLOSED：已关闭
+      // REVOKED：已撤销（付款码支付）
+      // USERPAYING：用户支付中（付款码支付）
+      // PAYERROR：支付失败(其他原因，如银行返回失败)
+      // 回复消息(参数为空回复成功, 传值则为错误消息)
+      // 查openid out_trade_no 把对应的订单信息改为成功，开通相应产品
+      const openid = xmldata.openid[0]
+      const out_trade_no = xmldata.out_trade_no[0]
+      await SqlOperate.updateUserOrderInfoByOrderId(openid, out_trade_no, 1)
+    }
+    else {
+      // 删除订单? 支付中？支付失败？
+    }
+    res.send(wechatApi.replyPayData())
+  }
+  catch (error) {
+    res.send(wechatApi.replyPayData(error.message))
+  }
+})
+
+router.post('/user/payurl', async (req, res) => {
+  const username = userSqlAuth(req, res)
+  if (!username) {
+    res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+    return
+  }
+  // const { question } = req.body as { question: string }
+
+  try {
+    const user: UserInfo = await getUserInfo(username)
+    if (!user || !user.openid)
+      throw new Error('请先关注或者扫描公众号绑定账号')
+    const orderId = uuidv4().slice(0, 8) + uuidv4().slice(-8)
+    const productId = '333333'
+    const openid = user.openid
+    await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
+    await SqlOperate.createAnOrderInfo(username, openid, productId, orderId)
+    const { prepay_id, code_url } = await wechatApi.payApi.unifiedOrder({
+      out_trade_no: orderId,
+      body: '测试商品',
+      total_fee: '1',
+      openid,
+      trade_type: 'NATIVE',
+      product_id: productId,
+    })
+
+    if (code_url)
+      res.send({ status: 'Success', message: code_url, data: '' })
+    else
+      throw new Error('请重新刷新页面')
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
     res.end()
   }
 })

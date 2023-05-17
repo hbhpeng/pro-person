@@ -16,10 +16,29 @@ export interface UserInfo {
   vipendday?: string
 }
 
+export interface UseOrderInfo {
+  id: number
+  username: string
+  productid: number
+  orderid: string
+  createtime: string
+  orderstate: number
+  openid: string
+  orderprice?: number
+  ordertype: number
+}
+
 interface AdminInfo {
   userid: number
   username: string
   password: string
+}
+
+export enum OrderStatus {
+  Pending = 0, // 待支付
+  Paid = 1, // 已支付
+  Refunded = 2, // 已退款
+  Cancelled = 3, // 已取消
 }
 
 // 生成随机字符串
@@ -187,10 +206,8 @@ async function updatCurrentKey() {
     await connection.query(sql)
     return connection
   }
-  catch (error) {
-    // console.error(`Error querying database: ${error.stack}`)
+  finally {
     connection.release()
-    throw error
   }
 }
 
@@ -272,8 +289,12 @@ export async function verifyUser(username: string, password: string) {
   }
 }
 
-export async function userScanLoginWithOpenId(openId: string) {
-  const querySql = `SELECT * FROM GPTUserInfo where openid = '${openId}'`
+export async function userScanLoginWithOpenId(openId: string, username?: string) {
+  let querySql: string
+  if (username)
+    querySql = `SELECT * FROM GPTUserInfo where username = '${username}'`
+  else
+    querySql = `SELECT * FROM GPTUserInfo where openid = '${openId}'`
   let connection: PoolConnection
   try {
     if (!openId)
@@ -292,6 +313,17 @@ export async function userScanLoginWithOpenId(openId: string) {
       const insertSql = 'INSERT INTO GPTUserInfo (username, password, openid, lastlogin, createtime) VALUES (?, ?, ?, ?, ?)'
       await connection.query(insertSql, [username, password, openId, date, date])
       return { username }
+    }
+    else if (user.openid !== openId && username) {
+      const queryopenId = 'SELECT * FROM GPTUserInfo where openid = ? LIMIT 1'
+      const [results] = await connection.query(queryopenId, openId)
+      const [user] = results as UserInfo[]
+      if (user)
+        throw new Error('用户已有账号')
+
+      // 之前没注册过就绑定账号
+      const updateSql = `UPDATE GPTUserInfo SET openid = '${openId}' WHERE username = '${username}'`
+      await connection.query(updateSql)
     }
     return user
   }
@@ -336,6 +368,95 @@ export async function registerUser(username: string, password: string) {
     // console.error(`Error querying database: ${error.stack}`)
     // throw error
     return false
+  }
+  finally {
+    connection.release()
+  }
+}
+
+// 订单相关
+export async function createAnOrderInfo(username: string,
+  openid: string,
+  productid: string,
+  orderid: string,
+) {
+  const sql = 'INSERT INTO GPTUserOrderInfo (username, openid, productid, createtime, orderid) VALUES (?, ?, ?, ?, ?)'
+  let connection: PoolConnection
+
+  try {
+    connection = await pool.getConnection()
+    const date = await getTodayDate()
+    await connection.query(sql, [username, openid, productid, date, orderid])
+  }
+  finally {
+    connection.release()
+  }
+}
+// orderid 必填  username和openid选填一个
+export async function getUserOrderInfoByOrderid(orderid: string, openid: string, username: string) {
+  let queryId = username
+  let querySql = 'SELECT * FROM GPTUserOrderInfo where username = ? and orderid = ?'
+  if (openid) {
+    querySql = 'SELECT * FROM GPTUserOrderInfo where openid = ? and orderid = ?'
+    queryId = openid
+  }
+
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [results] = await connection.query(querySql, [queryId, orderid])
+    const [orderInfo] = results as UseOrderInfo[]
+    if (orderInfo)
+      return orderInfo as UseOrderInfo
+    return null
+  }
+  catch {
+    return null
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function updateUserOrderInfoByOrderId(openid: string, orderid: string, orderstate: OrderStatus) {
+  const updateSql = 'update GPTUserOrderInfo set orderstate=? where openid=? and orderid=?'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const orderinfo = await getUserOrderInfoByOrderid(orderid, openid, '')
+
+    if (orderinfo.orderstate !== orderstate) {
+      await connection.query(updateSql, [orderstate, openid, orderid])
+      if (orderstate === OrderStatus.Paid) {
+        const updateSql = 'update GPTUserInfo set usagecount = usagecount + 0.001 where openid=?'
+        await connection.query(updateSql, [openid])
+      }
+    }
+  }
+  catch (error) {
+
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function deleteAllUserOrderUncomplete(openid: string, username: string) {
+  if (!username && !openid)
+    return
+  let queryId = username
+  let deletesql = 'DELETE FROM GPTUserOrderInfo WHERE orderstate != 1 AND username = ?'
+  if (openid) {
+    deletesql = 'DELETE FROM GPTUserOrderInfo WHERE orderstate != 1 AND openid = ?'
+    queryId = openid
+  }
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    await connection.query(deletesql, [queryId])
+  }
+  catch {
+
   }
   finally {
     connection.release()

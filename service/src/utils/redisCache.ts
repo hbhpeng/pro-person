@@ -36,10 +36,13 @@ export function hasSessionId(sessionId: string) {
   return qaCache.has(sessionId)
 }
 
-export function loginCheckSessionId(sessionId: string) {
+export function loginCheckSessionId(sessionId: string, username?: string) {
   if (sessionId === '0')
     return false
-  qaCache.set(sessionId, { islogin: 0 })
+  if (username)
+    qaCache.set(sessionId, { islogin: 0, username })
+  else
+    qaCache.set(sessionId, { islogin: 0 })
   return true
 }
 
