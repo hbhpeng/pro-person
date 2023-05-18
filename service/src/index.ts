@@ -153,6 +153,9 @@ router.post('/session', async (req, res) => {
   try {
     // const EXPIRE_DATE_TIME = process.env.EXPIRE_DATE_TIME
     // isExpire = await compareTime(EXPIRE_DATE_TIME)
+    SqlOperate.visitCache.visits++
+    SqlOperate.visitCache.uniqueVisitors.add(req.ip)
+
     const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
     const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
     let sessionid = req.headers.sessionid as string
@@ -183,6 +186,19 @@ router.post('/verify', async (req, res) => {
 })
 
 // 管理账号
+router.post('/admin/api/visits_statis', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const result = await SqlOperate.getTotalVisits()
+    res.send({ status: 'Success', message: '操作成功', data: JSON.stringify(result) })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
 router.post('/admin/user/adduser', async (req, res) => {
   try {
     if (!sqlAuth(req, res))

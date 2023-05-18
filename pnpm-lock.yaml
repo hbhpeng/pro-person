@@ -28,6 +28,12 @@ dependencies:
   katex:
     specifier: ^0.16.4
     version: 0.16.4
+  lodash:
+    specifier: ^4.17.21
+    version: 4.17.21
+  lodash-es:
+    specifier: ^4.17.21
+    version: 4.17.21
   markdown-it:
     specifier: ^13.0.1
     version: 13.0.1
@@ -55,6 +61,9 @@ dependencies:
   vue-router:
     specifier: ^4.1.6
     version: 4.1.6(vue@3.2.47)
+  vue-types:
+    specifier: ^4.2.1
+    version: 4.2.1(vue@3.2.47)
 
 devDependencies:
   '@antfu/eslint-config':
@@ -75,6 +84,12 @@ devDependencies:
   '@types/katex':
     specifier: ^0.16.0
     version: 0.16.0
+  '@types/lodash':
+    specifier: ^4.14.188
+    version: 4.14.191
+  '@types/lodash-es':
+    specifier: ^4.17.6
+    version: 4.17.6
   '@types/markdown-it':
     specifier: ^12.2.3
     version: 12.2.3
@@ -2144,11 +2159,9 @@ packages:
     resolution: {integrity: sha512-R+zTeVUKDdfoRxpAryaQNRKk3105Rrgx2CFRClIgRGaqDTdjsm8h6IYA8ir584W3ePzkZfst5xIgDwYrlh9HLg==}
     dependencies:
       '@types/lodash': 4.14.191
-    dev: false
 
   /@types/lodash@4.14.191:
     resolution: {integrity: sha512-BdZ5BCCvho3EIXw6wUCXHe7rS53AIDPLE+JzwgT+OsJk53oBfbSmZZ7CX4VaRoN78N+TJpFi9QPlfIVNmJYWxQ==}
-    dev: false
 
   /@types/markdown-it-link-attributes@3.0.1:
     resolution: {integrity: sha512-K8RnNb1q8j7rDOJbMF7AnlhCC/45BjrQ8z3WZWOrvkBIl8u9RXvmBdG/hfpnmK1JhhEZcmFEKWt+ilW1Mly+2Q==}
@@ -4743,6 +4756,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /is-plain-object@5.0.0:
+    resolution: {integrity: sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
   /is-regex@1.1.4:
     resolution: {integrity: sha512-kvRdxDsxZjhzUX07ZnLydzS1TU/TJlTUHHY4YLL87e37oUA49DfkLqgy+VjFocowy29cKvcSiu+kIv728jTTVg==}
     engines: {node: '>= 0.4'}
@@ -7109,6 +7127,16 @@ packages:
       '@volar/vue-typescript': 1.2.0
       typescript: 4.9.5
     dev: true
+
+  /vue-types@4.2.1(vue@3.2.47):
+    resolution: {integrity: sha512-DNQZmJuOvovLUIp0BENRkdnZHbI0V4e2mNvjAZOAXKD56YGvRchtUYOXA/XqTxdv7Ng5SJLZqRKRpAhm5NLaPQ==}
+    engines: {node: '>=12.16.0'}
+    peerDependencies:
+      vue: ^2.0.0 || ^3.0.0
+    dependencies:
+      is-plain-object: 5.0.0
+      vue: 3.2.47
+    dev: false
 
   /vue@3.2.47:
     resolution: {integrity: sha512-60188y/9Dc9WVrAZeUVSDxRQOZ+z+y5nO2ts9jWXSTkMvayiWxCWOWtBQoYjLeccfXkiiPZWAHcV+WTPhkqJHQ==}

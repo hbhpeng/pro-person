@@ -56,3 +56,11 @@ export function isFile<T extends File>(value: T | unknown): value is T {
 export function isNullOrUnDef(val: unknown): val is null | undefined {
   return isUndefined(val) || isNull(val)
 }
+
+export function isVip(val: string | null) {
+  if (!val)
+    return false
+  const endDate = new Date(val)
+  const now = new Date()
+  return now.getTime() < endDate.getTime()
+}

@@ -1,12 +1,15 @@
+declare global {
+	interface Window {
+		$loadingBar?: import('naive-ui').LoadingBarProviderInst;
+		$dialog?: import('naive-ui').DialogProviderInst;
+		$message?: import('naive-ui').MessageProviderInst;
+		$notification?: import('naive-ui').NotificationProviderInst;
+		WeixinJSBridge: any;
+	}
+}
 import type { ComputedRef, Ref } from 'vue';
 
-interface Window {
-  $loadingBar?: import('naive-ui').LoadingBarProviderInst;
-  $dialog?: import('naive-ui').DialogProviderInst;
-  $message?: import('naive-ui').MessageProviderInst;
-  $notification?: import('naive-ui').NotificationProviderInst;
-	WeixinJSBridge: any;
-}
+
 declare type Nullable<T> = T | null;
 declare type NonNullable<T> = T extends null | undefined ? never : T;
 declare type Recordable<T = any> = Record<string, T>;
