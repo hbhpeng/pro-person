@@ -1,25 +1,82 @@
 <script setup lang="ts">
 import { NCard, NGi, NGrid, NIcon } from 'naive-ui'
 import { GithubOutlined } from '@vicons/antd'
+import { reactive } from 'vue'
 import VisiTab from './components/VisiTab.vue'
+import {
+  adminGetTotalOrderReq,
+  adminGetTotalVisitReq,
+} from '@/api'
+interface HourResult {
+  hour: number
+  count: string
+}
+interface MonthResult {
+  month: number
+  count: string
+}
+interface TotalVisitReqData {
+  total_result: { total_visits: string }
+  hour_result: Array<HourResult>
+  month_result: Array<MonthResult>
+}
 
-// const statisticData = [
-//   {
-//     title: '新增用户',
-//     value: '99',
-//     suffix: '100',
-//   },
-//   {
-//     title: '新增用户',
-//     value: '99',
-//     suffix: '100',
-//   },
-//   {
-//     title: '新增用户',
-//     value: '99',
-//     suffix: '100',
-//   },
-// ]
+interface TotalResut {
+  total_order: number
+  total_money: number
+}
+interface WeekResut {
+  weak_order: number
+  weak_money: number
+}
+interface TotalOrderReqData {
+  total_result: TotalResut
+  weak_result: WeekResut
+}
+
+const defalutData: TotalVisitReqData = {
+  total_result: { total_visits: '9' },
+  hour_result: [{ hour: 16, count: '4' }, { hour: 17, count: '2' }],
+  month_result: [{ month: 3, count: '1' }, { month: 5, count: '6' }],
+}
+
+const defalutOrderData: TotalOrderReqData = {
+  total_result: { total_order: 0, total_money: 132 },
+  weak_result: { weak_order: 0, weak_money: 345 },
+}
+
+let totalVisitData: TotalVisitReqData = reactive(defalutData)
+let totalOrderData: TotalOrderReqData = reactive(defalutOrderData)
+
+async function getTotalVisitReq() {
+  try {
+    const { data } = await adminGetTotalVisitReq()
+    const result = JSON.parse(data as string)
+    totalVisitData = reactive(result)
+    // eslint-disable-next-line no-console
+    console.log(result)
+  }
+  catch (error: any) {
+    // eslint-disable-next-line no-console
+    console.log(error.message)
+  }
+}
+
+async function getTotalOrderReq() {
+  try {
+    const { data } = await adminGetTotalOrderReq()
+    const result = JSON.parse(data as string)
+    totalOrderData = reactive(result)
+    // eslint-disable-next-line no-console
+    console.log(result)
+  }
+  catch (error: any) {
+    // eslint-disable-next-line no-console
+    console.log(error.message)
+  }
+}
+getTotalVisitReq()
+getTotalOrderReq()
 </script>
 
 <template>
@@ -37,7 +94,7 @@ import VisiTab from './components/VisiTab.vue'
               <GithubOutlined />
             </NIcon>
           </span>
-          <span class="text-lg ml-4">14243</span>
+          <span class="text-lg ml-4">{{ totalVisitData?.total_result?.total_visits }}</span>
         </div>
       </NCard>
     </NGi>
@@ -52,7 +109,7 @@ import VisiTab from './components/VisiTab.vue'
               <GithubOutlined />
             </NIcon>
           </span>
-          <span class="text-lg ml-4">4453</span>
+          <span class="text-lg ml-4">{{ totalOrderData?.total_result?.total_order }}</span>
         </div>
       </NCard>
     </NGi>
@@ -67,7 +124,7 @@ import VisiTab from './components/VisiTab.vue'
               <GithubOutlined />
             </NIcon>
           </span>
-          <span class="text-lg ml-4">565565</span>
+          <span class="text-lg ml-4">{{ totalOrderData?.weak_result?.weak_money }}</span>
         </div>
       </NCard>
     </NGi>
@@ -87,61 +144,9 @@ import VisiTab from './components/VisiTab.vue'
       </NCard>
     </NGi>
   </NGrid>
-  <!-- <div class="workplace">
-    <div class="container">
-      <NRow class="row-container">
-        <NCol :span="12">
-          <NStatistic label="统计数据" :value="99">
-            <template #prefix>
-              <SvgIcon icon="fontisto:preview" />
-            </template>
-            <template #suffix>
-              / 100
-            </template>
-          </NStatistic>
-        </NCol>
-      </NRow>
-      <NRow class="row-container">
-        <NCol :span="12">
-          <NStatistic label="统计数据" :value="99">
-            <template #prefix>
-              <SvgIcon icon="fontisto:preview" />
-            </template>
-            <template #suffix>
-              / 100
-            </template>
-          </NStatistic>
-        </NCol>
-      </NRow>
-      <NRow class="row-container">
-        <NCol :span="12">
-          <NStatistic label="统计数据" :value="99">
-            <template #prefix>
-              <SvgIcon icon="fontisto:preview" />
-            </template>
-            <template #suffix>
-              / 100
-            </template>
-          </NStatistic>
-        </NCol>
-      </NRow>
-      <NRow class="row-container">
-        <NCol :span="12">
-          <NStatistic label="统计数据" :value="99">
-            <template #prefix>
-              <SvgIcon icon="fontisto:preview" />
-            </template>
-            <template #suffix>
-              / 100
-            </template>
-          </NStatistic>
-        </NCol>
-      </NRow>
-    </div> -->
   <div class="echart">
     <VisiTab />
   </div>
-  <!-- </div> -->
 </template>
 
 <style lang="less" scoped>
