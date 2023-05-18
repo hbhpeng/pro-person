@@ -3,6 +3,16 @@ import type { PoolConnection } from 'mysql2/promise'
 import mysql from 'mysql2/promise'
 import { getTodayDate } from './dateAuth'
 
+const pool = mysql.createPool({
+  host: 'mysql',
+  // host: 'localhost',
+  port: 3306,
+  user: 'houp',
+  password: '624634',
+  database: 'GPTDatabase',
+  connectionLimit: 100,
+})
+
 export interface UserInfo {
   userid?: number
   username: string
@@ -41,6 +51,68 @@ export enum OrderStatus {
   Cancelled = 3, // 已取消
 }
 
+// 缓存数据接口
+interface VisitCache {
+  visits: number
+  uniqueVisitors: Set<string>
+}
+
+export const visitCache: VisitCache = {
+  visits: 0,
+  uniqueVisitors: new Set(),
+}
+
+// 每分钟将缓存写入数据库
+setInterval(() => {
+  // 将缓存写入到数据库中
+  writeCacheToDatabase(visitCache)
+
+  // 清空缓存
+  visitCache.visits = 0
+  visitCache.uniqueVisitors.clear()
+}, 60000 * 30)
+
+async function writeCacheToDatabase(cache: VisitCache) {
+  if (visitCache.visits <= 0 && visitCache.uniqueVisitors.size <= 0)
+    return
+  const insertSql = `INSERT INTO GPTVisitStatic (visits_count, unique_visits) VALUES (${cache.visits}, ${cache.uniqueVisitors.size})`
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    await connection.query(insertSql)
+  }
+  catch (error) {
+    console.error(`Error querying database: ${error.stack}`)
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function getTotalVisits() {
+  let querySql = 'SELECT SUM(visits_count) AS total_visits FROM GPTVisitStatic'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [total_result] = await connection.query(querySql)
+    querySql = `
+      SELECT HOUR(created_at) AS hour, SUM(visits_count) AS count
+      FROM GPTVisitStatic WHERE DATE(created_at) = CURDATE() GROUP BY HOUR(created_at)`
+    const [hour_result] = await connection.query(querySql)
+    querySql = `
+      SELECT MONTH(created_at) AS month, SUM(visits_count) AS count
+      FROM GPTVisitStatic WHERE YEAR(created_at) = YEAR(CURDATE()) GROUP BY MONTH(created_at)`
+    const [month_result] = await connection.query(querySql)
+    return { total_result: total_result[0], hour_result, month_result }
+  }
+  catch (error) {
+    console.error(`Error querying database: ${error.stack}`)
+  }
+  finally {
+    connection.release()
+  }
+}
+
 // 生成随机字符串
 function randomString(length) {
   const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -58,16 +130,6 @@ function formatDate(date) {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}${month}${day}`
 }
-
-const pool = mysql.createPool({
-  host: 'mysql',
-  // host: 'localhost',
-  port: 3306,
-  user: 'houp',
-  password: '624634',
-  database: 'GPTDatabase',
-  connectionLimit: 100,
-})
 
 export async function getUserInfoPage(page: number, pageSize: number): Promise<UserInfo[]> {
   const offset = (page - 1) * pageSize
@@ -95,13 +157,13 @@ export async function addOrUpdateUserInfo(userinfo: UserInfo) {
     let sql: string
     if (!userinfo.userid || userinfo.userid < 0) {
       // 插入
-      sql = 'insert into GPTUserInfo(`username`, `usagecount`, `usecount`, `password`) values(?, ?, ?, ?)'
-      await connection.execute(sql, [userinfo.username, userinfo.usagecount, userinfo.usecount, userinfo.password])
+      sql = 'insert into GPTUserInfo(`username`, `usagecount`, `usecount`, `password`, `vipendday`) values(?, ?, ?, ?, ?)'
+      await connection.execute(sql, [userinfo.username, userinfo.usagecount, userinfo.usecount, userinfo.password, userinfo.vipendday])
     }
     else {
       // 更新
-      sql = 'update GPTUserInfo set username=?, usagecount=?, usecount=?, password=? where userid=?'
-      await connection.execute(sql, [userinfo.username, userinfo.usagecount, userinfo.usecount, userinfo.password, userinfo.userid])
+      sql = 'update GPTUserInfo set username=?, usagecount=?, usecount=?, password=?, vipendday=? where userid=?'
+      await connection.execute(sql, [userinfo.username, userinfo.usagecount, userinfo.usecount, userinfo.password, userinfo.vipendday, userinfo.userid])
     }
     return { status: 'success' }
   }

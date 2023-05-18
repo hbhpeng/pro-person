@@ -81,6 +81,18 @@ export function removePassword<T>(token: string, admin: string) {
   })
 }
 
+export function adminGetTotalVisitReq<T>() {
+  return post<T>({
+    url: '/admin/api/visits_statis',
+  })
+}
+
+export function adminGetTotalOrderReq<T>() {
+  return post<T>({
+    url: '/admin/api/order_statis',
+  })
+}
+
 export function changeOpenApi<T>(apikey: string) {
   return post<T>({
     url: '/admin/api/changeapikeys',
@@ -101,27 +113,25 @@ export function deleteOpenApi<T>(apikey: string) {
   })
 }
 
-export function addOrUpdateUserInfo<T>(username: string, password: string, usagecount: number,
-  usecount: number, userid: number, admin: string, isupdate: boolean) {
+export function addOrUpdateUserInfo<T>(userInfo: any, isupdate: boolean) {
   if (isupdate) {
     return post<T>({
       url: '/admin/user/adduser',
-      data: { username, userid: -1, password, usagecount, usecount, admin },
+      data: { ...userInfo, userid: -1 },
     })
   }
   else {
     return post<T>({
       url: '/admin/user/adduser',
-      data: { username, userid, password, usagecount, usecount, admin },
+      data: { ...userInfo },
     })
   }
 }
 
-export function deleteUserInfo<T>(username: string, password: string, usagecount: number,
-  usecount: number, userid: number, admin: string) {
+export function deleteUserInfo<T>(userInfo: any) {
   return post<T>({
     url: '/admin/user/deleteuser',
-    data: { username, userid, password, usagecount, usecount, admin },
+    data: { ...userInfo },
   })
 }
 

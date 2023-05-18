@@ -88,6 +88,10 @@ document.getElementById("chart-form").addEventListener("submit", async (event) =
   loadingAnimation.style.display = "none";
 
   if (data.success) {
+		const index = data.chartConfig.indexOf('{')
+		if (index > 0) {
+			data.chartConfig = data.chartConfig.slice(index)
+		}
 		chartConfigs = data.chartConfig.split('@123456789')
 		if (chartConfigs.length > 0) {
 			chartConfigData = chartConfigs[0]

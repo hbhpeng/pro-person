@@ -76,6 +76,7 @@ export const getWechatOfficialQrcode = async (sessionid: string) => {
   const response = await http.post(url, data, config)
   // const ticket = response.data.ticket
   // const expireSeconds = response.data.expire_seconds
+  // console.log(response.data)
   const qrCodeUrl = response.data.url
   return qrCodeUrl
 }

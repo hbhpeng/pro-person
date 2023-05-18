@@ -144,6 +144,11 @@ const payShouldLogin = () => {
   loginVwShow.value = true
 }
 
+const userWantVip = () => {
+  personVwShow.value = false
+  payShow.value = true
+}
+
 const moreFunctions = () => {
   router.push({ name: 'morev' })
 }
@@ -207,7 +212,7 @@ const moreFunctions = () => {
   </template>
   <PromptStore v-model:visible="show" />
   <UserInfo v-model:visible="loginVwShow" />
-  <PersonInfo v-model:visible="personVwShow" />
+  <PersonInfo v-model:visible="personVwShow" @become-vip="userWantVip" />
   <MakePPT v-model:visible="aiPPTShow" />
   <ProductPay v-model:visible="payShow" @create-order="createOrder" @pay-should-login="payShouldLogin" />
   <OrderQrcode v-model:visible="orderImgShow" />

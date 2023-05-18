@@ -1,11 +1,15 @@
 <script lang='ts'>
 import {
   NCard,
+  NDatePicker,
+  NDrawer,
   NInput,
+  NSpace,
   NSpin,
   NTable,
   useMessage,
 } from 'naive-ui'
+import moment from 'moment'
 import {
   addOrUpdateUserInfo,
   changeOpenApi,
@@ -14,6 +18,15 @@ import {
 } from '@/api'
 import { SvgIcon } from '@/components/common'
 
+interface UserInfo {
+  userid: number
+  username: string
+  password: string
+  usagecount: number
+  usecount: number
+  vipendday?: string
+}
+
 export default {
   components: {
     NSpin,
@@ -21,23 +34,23 @@ export default {
     NCard,
     NInput,
     SvgIcon,
+    NDrawer,
+    NDatePicker,
+    NSpace,
   },
   data() {
     return {
       users: [
         // 添加更多假数据
-      ] as any[],
+      ] as UserInfo[],
       ms: useMessage(),
+      cuInfo: { userid: -1, username: '', password: '', usagecount: 0, usecount: 0, vipendday: '' },
       loading: false,
-      userid: -1,
-      username: '',
-      password: '',
-      usagecount: 0,
       currentPage: 1,
       pageSize: 10,
-      usecount: 0,
       openapi: '',
       queryname: '',
+      active: false,
     }
   },
   computed: {
@@ -52,6 +65,21 @@ export default {
       const start = (this.currentPage - 1) * this.pageSize
       const end = start + this.pageSize
       return this.users.slice(start, end)
+    },
+    timestamp: {
+      get() {
+        if (this.cuInfo && this.cuInfo.vipendday)
+          return moment(this.cuInfo.vipendday).valueOf()
+        return moment().valueOf()
+      },
+      set(value: any) {
+        if (this.cuInfo) {
+          if (value)
+            this.cuInfo.vipendday = moment(value).format('YYYY-MM-DD HH:mm:ss')
+          else
+            this.cuInfo.vipendday = ''
+        }
+      },
     },
   },
   mounted() {
@@ -101,27 +129,29 @@ export default {
         this.loading = false
       }
     },
+    makeaEmptyUser() {
+      return { userid: -1, username: '', password: '', usagecount: 0, usecount: 0, vipendday: '' }
+    },
+    handleTime(value: any) {
+      if (value)
+        return moment(value).format('YYYY-MM-DD HH:mm:ss')
+
+      return ''
+    },
     async addUser() {
+      this.active = true
       const newUser = {
-        username: this.username,
-        usagecount: this.usagecount,
-        password: this.password,
-        userid: this.userid,
-        usecount: this.usecount,
+        ...this.cuInfo,
       }
       try {
         this.loading = true
         const {
           message,
-        } = await addOrUpdateUserInfo(this.username, this.password, this.usagecount, this.usecount, this.userid, '',
-          false)
+        } = await addOrUpdateUserInfo(this.cuInfo, false)
         this.ms.success(message ?? '')
         this.users.push(newUser)
-        this.username = ''
-        this.password = ''
-        this.usagecount = 0
-        this.usecount = 0
-        this.userid = -1
+        this.cuInfo = this.makeaEmptyUser()
+        this.active = false
       }
       catch (error: any) {
         this.ms.error(error.message ?? '')
@@ -130,13 +160,12 @@ export default {
         this.loading = false
       }
     },
-    async deleteUser(user: any) {
+    async deleteUser(user: UserInfo) {
       try {
         this.loading = true
         const {
           message,
-        } = await deleteUserInfo(user.username, user.password, user
-          .usagecount, user.usecount, user.userid, '')
+        } = await deleteUserInfo(user)
         this.ms.success(message ?? '')
         this.users = this.users.filter((item: any) => user.username !== item.username)
       }
@@ -148,12 +177,19 @@ export default {
       }
     },
     editUser(user: any) {
-      this.userid = user.userid
-      this.username = user.username
-      this.usagecount = user.usagecount
-      this.password = user.password
-      this.usecount = user.usecount
+      this.active = true
+      this.cuInfo = { ...user }
       this.users = this.users.filter((item: any) => user.username !== item.username)
+    },
+    showAddUser() {
+      this.active = true
+    },
+    drawerStateUpdate(show: boolean) {
+      if (!show && this.cuInfo.userid > 0) {
+        this.users.unshift({ ...this.cuInfo })
+        this.cuInfo = this.makeaEmptyUser()
+      }
+      this.active = show
     },
     prevPage() {
       if (this.currentPage > 1)
@@ -170,27 +206,44 @@ export default {
 <template>
   <NSpin :show="loading">
     <div class="container">
+      <NDrawer v-model:show="active" :on-update:show="drawerStateUpdate" :width="502" placement="right">
+        <NCard class="form">
+          <NSpace vertical>
+            <div class="row-content">
+              <span class="centered">用户名：</span><input v-model="cuInfo.username" placeholder="用户名">
+            </div>
+            <div class="row-content">
+              <span class="centered">用户密码：</span><input v-model="cuInfo.password" placeholder="用户密码">
+            </div>
+            <div class="row-content">
+              <span class="centered">总字数(单位万)：</span><input
+                v-model.number="cuInfo.usagecount" placeholder="总字数"
+                type="number"
+              >
+            </div>
+            <div class="row-content">
+              <span class="centered">会员到期时间</span>
+              <NDatePicker v-model:value="timestamp" type="datetime" clearable />
+            </div>
+            <button style="width: 100%;" @click="addUser">
+              确定
+            </button>
+          </NSpace>
+        </NCard>
+      </NDrawer>
+
+      <button style="margin-bottom: 10px;" @click="showAddUser">
+        添加用户
+      </button>
       <NInput v-model:value="queryname" placeholder="输入用户名查询">
         <template #suffix>
           <SvgIcon icon="ic:baseline-search" />
         </template>
       </NInput>
-      <div class="form">
-        <input v-model="username" placeholder="用户名">
-        <input v-model="password" placeholder="用户密码">
-        <div>
-          <span style="margin-top: 5px;">总字数(单位万)：</span><input
-            v-model.number="usagecount" placeholder="使用次数"
-            type="number"
-          >
-        </div>
-        <button @click="addUser">
-          添加用户
-        </button>
-      </div>
+
       <NCard
         :bordered="false"
-        title="用户信息"
+        :title="`用户信息(总数：${users.length})` "
         class="mt-4 proCard"
         size="small"
         :segmented="{ content: true }"
@@ -202,6 +255,7 @@ export default {
               <th>总字数</th>
               <th>已用字数</th>
               <th>用户密码</th>
+              <th>会员到期时间</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -211,6 +265,7 @@ export default {
               <td>{{ user.usagecount }}</td>
               <td>{{ user.usecount }}</td>
               <td>{{ user.password }}</td>
+              <td>{{ handleTime(user.vipendday) }}</td>
               <td>
                 <button @click="editUser(user)">
                   编辑
@@ -243,10 +298,21 @@ margin: 20px auto;
 font-family: Arial, sans-serif;
 }
 
+.centered {
+  display: flex;
+  align-items: center;
+}
+
 .form {
 display: flex;
-justify-content: space-between;
+flex-direction: column;
+justify-content: center;
 margin-bottom: 20px;
+}
+.row-content {
+display: flex;
+flex-direction: row;
+justify-content: space-between;
 }
 
 input {
