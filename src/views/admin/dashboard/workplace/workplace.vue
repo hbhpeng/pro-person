@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { NCol, NRow, NStatistic } from 'naive-ui'
+import { NCard, NGi, NGrid, NIcon } from 'naive-ui'
+import { GithubOutlined } from '@vicons/antd'
 import VisiTab from './components/VisiTab.vue'
-import { SvgIcon } from '@/components/common'
 
 // const statisticData = [
 //   {
@@ -23,7 +23,71 @@ import { SvgIcon } from '@/components/common'
 </script>
 
 <template>
-  <div class="workplace">
+  <NGrid x-gap="12" :cols="4">
+    <NGi>
+      <NCard
+        title="总订单量"
+        size="small"
+        class="cursor-pointer project-card-item ms:w-1/2 md:w-1/3"
+        hoverable
+      >
+        <div class="flex">
+          <span>
+            <NIcon size="30">
+              <GithubOutlined />
+            </NIcon>
+          </span>
+          <span class="text-lg ml-4">14243</span>
+        </div>
+      </NCard>
+    </NGi>
+    <NGi>
+      <NCard
+        title="总金额"
+        size="small"
+      >
+        <div class="flex">
+          <span>
+            <NIcon size="30">
+              <GithubOutlined />
+            </NIcon>
+          </span>
+          <span class="text-lg ml-4">4453</span>
+        </div>
+      </NCard>
+    </NGi>
+    <NGi>
+      <NCard
+        title="周订单量"
+        size="small"
+      >
+        <div class="flex">
+          <span>
+            <NIcon size="30">
+              <GithubOutlined />
+            </NIcon>
+          </span>
+          <span class="text-lg ml-4">565565</span>
+        </div>
+      </NCard>
+    </NGi>
+    <NGi>
+      <NCard
+        title="周金额"
+        size="small"
+      >
+        <div class="flex">
+          <span>
+            <NIcon size="30">
+              <GithubOutlined />
+            </NIcon>
+          </span>
+          <span class="text-lg ml-4">345435</span>
+        </div>
+      </NCard>
+    </NGi>
+  </NGrid>
+  <!-- <div class="workplace">
     <div class="container">
       <NRow class="row-container">
         <NCol :span="12">
@@ -61,11 +125,23 @@ import { SvgIcon } from '@/components/common'
           </NStatistic>
         </NCol>
       </NRow>
-    </div>
-    <div class="echart">
-      <VisiTab />
-    </div>
+      <NRow class="row-container">
+        <NCol :span="12">
+          <NStatistic label="统计数据" :value="99">
+            <template #prefix>
+              <SvgIcon icon="fontisto:preview" />
+            </template>
+            <template #suffix>
+              / 100
+            </template>
+          </NStatistic>
+        </NCol>
+      </NRow>
+    </div> -->
+  <div class="echart">
+    <VisiTab />
   </div>
+  <!-- </div> -->
 </template>
 
 <style lang="less" scoped>
@@ -80,7 +156,7 @@ import { SvgIcon } from '@/components/common'
   }
   .row-container{
     background-color: white;
-     width: 30%;
+     width: 20%;
     display: flex;
     flex-direction: row;
     justify-content: left;
@@ -94,4 +170,13 @@ import { SvgIcon } from '@/components/common'
   .echart{
     background-color: white;
   }
+
+  .light-green {
+  height: 108px;
+  background-color: rgba(0, 128, 0, 0.12);
+}
+.green {
+  height: 108px;
+  background-color: rgba(0, 128, 0, 0.24);
+}
 </style>
