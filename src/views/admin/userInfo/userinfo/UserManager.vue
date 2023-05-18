@@ -23,8 +23,6 @@ interface UserInfo {
   username: string
   password: string
   usagecount: number
-  currentPage: number
-  pageSize: number
   usecount: number
   vipendday?: string
 }
@@ -74,7 +72,7 @@ export default {
           return moment(this.cuInfo.vipendday).valueOf()
         return moment().valueOf()
       },
-      set(value) {
+      set(value: any) {
         if (this.cuInfo) {
           if (value)
             this.cuInfo.vipendday = moment(value).format('YYYY-MM-DD HH:mm:ss')
@@ -134,7 +132,7 @@ export default {
     makeaEmptyUser() {
       return { userid: -1, username: '', password: '', usagecount: 0, usecount: 0, vipendday: '' }
     },
-    handleTime(value) {
+    handleTime(value: any) {
       if (value)
         return moment(value).format('YYYY-MM-DD HH:mm:ss')
 
@@ -178,12 +176,12 @@ export default {
         this.loading = false
       }
     },
-    editUser(user: UserInfo) {
+    editUser(user: any) {
       this.active = true
       this.cuInfo = { ...user }
       this.users = this.users.filter((item: any) => user.username !== item.username)
     },
-    showAddUser(user: UserInfo) {
+    showAddUser() {
       this.active = true
     },
     drawerStateUpdate(show: boolean) {
