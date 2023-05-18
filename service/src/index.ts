@@ -199,6 +199,19 @@ router.post('/admin/api/visits_statis', async (req, res) => {
   }
 })
 
+router.post('/admin/api/order_statis', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const result = await SqlOperate.getAllOrderStatis()
+    res.send({ status: 'Success', message: '操作成功', data: JSON.stringify(result) })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
 router.post('/admin/user/adduser', async (req, res) => {
   try {
     if (!sqlAuth(req, res))

@@ -87,6 +87,12 @@ export function adminGetTotalVisitReq<T>() {
   })
 }
 
+export function adminGetTotalOrderReq<T>() {
+  return post<T>({
+    url: '/admin/api/order_statis',
+  })
+}
+
 export function changeOpenApi<T>(apikey: string) {
   return post<T>({
     url: '/admin/api/changeapikeys',
