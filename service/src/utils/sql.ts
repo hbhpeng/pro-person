@@ -38,6 +38,12 @@ export interface UserOrderInfo {
   ordertype: number
 }
 
+// export interface OrderProductInfo {
+// id: number
+// username: string
+// productid
+// }
+
 interface AdminInfo {
   userid: number
   username: string
@@ -499,6 +505,24 @@ export async function getUserOrderInfoByOrderid(orderid: string, openid: string,
   }
 }
 
+// productid 必填
+export async function getProductInfoByProductId(productid: string) {
+  const querySql = 'SELECT * FROM GPTUserOrderInfo where productid = ?'
+
+  // let connection: PoolConnection
+  // try {
+  //   connection = await pool.getConnection()
+  //   const [results] = await connection.query(querySql)
+  //   const [productInfo] = results as OrderProductInfo[]
+  //   if (productInfo)
+  //     return productInfo as OrderProductInfo
+  // return null
+  // }
+  // finally {
+  //   connection.release()
+  // }
+}
+
 export async function updateUserOrderInfoByOrderId(username: string, openid: string, orderid: string, orderstate: OrderStatus) {
   let queryId = openid
   let updateSql = 'update GPTUserOrderInfo set orderstate=? where openid=? and orderid=?'
@@ -515,6 +539,8 @@ export async function updateUserOrderInfoByOrderId(username: string, openid: str
     if (orderinfo.orderstate !== orderstate) {
       await connection.query(updateSql, [orderstate, queryId, orderid])
       if (orderstate === OrderStatus.Paid) {
+        // 根据prodcutid去表里查是什么产品
+
         const updateSql = 'update GPTUserInfo set usagecount = usagecount + 0.001 where openid=?'
         await connection.query(updateSql, [openid])
       }
