@@ -3,15 +3,29 @@ import { h } from 'vue'
 import { NButton, NDataTable, useMessage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 
+const props = defineProps<Props>()
+
+const emit = defineEmits<Emits>()
+
 const message = useMessage()
 
 interface Song {
   id: number
   name: string
-  wordNum: number
-  orginPrice: number
-  nowPrice: number
+  wordnum: number
+  originprice: number
+  nowprice: number
   description: string
+  needvip: number
+  needStr: string
+}
+
+interface Props {
+  proList: Song[]
+}
+
+interface Emits {
+  (e: 'deleteItem', item: any): void
 }
 
 const createColumns = ({
@@ -21,24 +35,24 @@ const createColumns = ({
 }): DataTableColumns<Song> => {
   return [
     {
-      title: 'id',
-      key: 'id',
-    },
-    {
       title: '套餐名称',
       key: 'name',
     },
     {
       title: '字数',
-      key: 'wordNum',
+      key: 'wordnum',
     },
     {
       title: '原价',
-      key: 'orginPrice',
+      key: 'originprice',
     },
     {
       title: '现价',
-      key: 'nowPrice',
+      key: 'nowprice',
+    },
+    {
+      title: '需要会员',
+      key: 'needStr',
     },
     {
       title: '描述',
@@ -63,15 +77,10 @@ const createColumns = ({
   ]
 }
 
-const data: Song[] = [
-  { id: 3, name: '周会员', wordNum: 12323, orginPrice: 12, nowPrice: 35.3, description: '死定了开发商两地分居的基辅罗斯大嫁风尚水电费水电费乐山大佛乐山大佛进水了的开发惊世毒妃\r\n双丰收了' },
-  { id: 3, name: '周会员', wordNum: 12343, orginPrice: 12, nowPrice: 35, description: 'sdfs' },
-  { id: 3, name: '周会员', wordNum: 35353, orginPrice: 12, nowPrice: 35, description: 'sdfs' },
-]
-
 const columns = createColumns({
   play(row: Song) {
-    message.info(`Play ${row.name}`)
+    // message.info(`Play ${row.name}`)
+    emit('deleteItem', row)
   },
 })
 const pagination = false as const
@@ -80,7 +89,7 @@ const pagination = false as const
 <template>
   <NDataTable
     :columns="columns"
-    :data="data"
+    :data="props.proList"
     :pagination="pagination"
     :bordered="false"
   />

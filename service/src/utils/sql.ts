@@ -612,7 +612,8 @@ description=?, reserve=?, needvip=? WHERE id=?`
       params = [product.name, product.wordnum, product.originprice, product.nowprice,
         product.description, product.reserve, product.needvip, product.id]
     }
-    await connection.query(sql, params)
+    const [result] = await connection.query(sql, params) as any[]
+    return result.insertId
   }
   finally {
     connection.release()

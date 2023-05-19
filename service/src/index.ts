@@ -203,8 +203,8 @@ router.post('/product/add', async (req, res) => {
     const { ...productInfo } = req.body as SqlOperate.OrderProductInfo
     if (!productInfo.name)
       throw new Error('产品名称不能为空')
-    await SqlOperate.addAProductInfo(productInfo)
-    res.send({ status: 'Success', message: '操作成功', data: null })
+    const pid = await SqlOperate.addAProductInfo(productInfo)
+    res.send({ status: 'Success', message: pid, data: null })
   }
   catch (error) {
     res.send({ status: 'Fail', message: '操作失败', data: null })

@@ -162,6 +162,20 @@ export function reqProductList<T>() {
   })
 }
 
+export function reqDeleteProduct<T>(productInfo: any[]) {
+  return post<T>({
+    url: '/product/delete',
+    data: { ...productInfo },
+  })
+}
+
+export function reqAddProduct<T>(productInfo: any) {
+  return post<T>({
+    url: '/product/add',
+    data: { ...productInfo },
+  })
+}
+
 export function getSingleUserInfo<T>() {
   return post<T>({
     url: '/user/getuserinfo',

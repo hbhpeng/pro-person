@@ -1,23 +1,42 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { NAutoComplete, NButton, NCard, NForm, NFormItem, NIcon, NInput, NInputNumber, NModal, NSpace } from 'naive-ui'
+import { NAutoComplete, NButton, NCard, NForm, NFormItem, NIcon, NInput, NInputNumber, NModal, NSpace, NSpin, NSwitch, useLoadingBar, useMessage } from 'naive-ui'
 import { PlusOutlined } from '@vicons/antd'
 import { type FormRules } from 'naive-ui'
 import NewTable from './NewTable.vue'
+import {
+  reqAddProduct,
+  reqDeleteProduct,
+  reqProductList,
+} from '@/api'
 // import { http } from '@/utils/http/axios'
 
-// const message = useMessage()
+const message = useMessage()
+const loadingbar = useLoadingBar()
+
+interface OrderProductInfo {
+  id: number
+  name: string
+  wordnum: number
+  originprice: number
+  nowprice: number
+  description: string
+  reserve?: string
+  needvip: number
+}
 
 const showModal = ref(false)
 const formBtnLoading = ref(false)
 const formRef: any = ref(null)
+const loading = ref(false)
 
 const formParams = reactive({
   name: '',
-  wordNum: 0,
-  originPrice: '',
-  nowPrice: 0,
+  wordnum: 0,
+  originprice: 0,
+  nowprice: 0,
   description: '',
+  needvip: 0,
 })
 const rules: FormRules = {
   name: {
@@ -25,18 +44,19 @@ const rules: FormRules = {
     trigger: ['blur', 'input'],
     message: '请输入套餐名称',
   },
-  wordNum: {
+  wordnum: {
     type: 'number',
     required: true,
     trigger: ['blur', 'input'],
     message: '请输入字数',
   },
-  originPrice: {
+  originprice: {
+    type: 'number',
     required: false,
     trigger: ['blur', 'input'],
-    message: '可以不用数字',
+    message: '可以不输入的',
   },
-  nowPrice: {
+  nowprice: {
     type: 'number',
     required: true,
     trigger: ['blur', 'input'],
@@ -53,6 +73,13 @@ interface VipOption {
   name: string
   long: number // 1: 7天 2: 1个月 3: 1个季度 4: 1年
 }
+
+const productlist = ref<OrderProductInfo[]>([])
+const productlistShow = computed(() => {
+  return productlist.value.map((item) => {
+    return { ...item, needStr: item.needvip > 0 ? '需要' : '不需要' }
+  })
+})
 
 const getVipOption = (name: string, long: number) => {
   return { name, long }
@@ -76,23 +103,87 @@ const nameGetShow = (value: string) => {
   return true
 }
 
+async function gerProductList() {
+  try {
+    loadingbar.start()
+    const { data } = await reqProductList()
+    productlist.value = JSON.parse(data as string) as OrderProductInfo[]
+    loadingbar.finish()
+  }
+  catch (error: any) {
+    loadingbar.error()
+    message.error(error.message)
+  }
+}
+
+async function deleteItem(item: any) {
+  try {
+    loadingbar.start()
+    loading.value = true
+    await reqDeleteProduct(item)
+    productlist.value = productlist.value.filter((value) => {
+      return item.id !== value.id
+    })
+    message.success('删除成功')
+    loadingbar.finish()
+  }
+  catch (error: any) {
+    loadingbar.error()
+    message.error(error.message)
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+function checkNeedVip() {
+  const index = packageVipOptions.findIndex((value) => {
+    return value.name === formParams.name
+  })
+  if (index > -1)
+    formParams.needvip = 0
+
+  else
+    formParams.needvip = 1
+}
+
 function confirmForm(e: { preventDefault: () => void }) {
   e.preventDefault()
-  formBtnLoading.value = true
-  formRef.value.validate((errors: any) => {
-    // if (!errors) {
-    //   window.$message.success('新建成功')
-    //   setTimeout(() => {
-    //     showModal.value = false
-    //     reloadTable()
-    //   })
-    // }
-    // else {
-    //   window.$message.error('请填写完整信息')
-    // }
-    formBtnLoading.value = false
+  formRef.value.validate(async (errors: any) => {
+    if (errors)
+      return
+
+    formBtnLoading.value = true
+    const params = {
+      name: formParams.name,
+      wordnum: formParams.wordnum,
+      originprice: formParams.originprice,
+      nowprice: formParams.nowprice,
+      description: formParams.description,
+      needvip: formParams.needvip,
+    }
+    try {
+      const { message: pid } = await reqAddProduct(params)
+      const id = parseInt(pid as string)
+      productlist.value.unshift({ ...params, id })
+      formParams.name = ''
+      formParams.wordnum = 0
+      formParams.originprice = 0
+      formParams.nowprice = 0
+      formParams.description = ''
+      formParams.needvip = 0
+      showModal.value = false
+      message.success('添加成功')
+    }
+    catch (error: any) {
+      message.error(error.message)
+    }
+    finally {
+      formBtnLoading.value = false
+    }
   })
 }
+gerProductList()
 </script>
 
 <template>
@@ -121,20 +212,21 @@ function confirmForm(e: { preventDefault: () => void }) {
               :options="nameOptions"
               :get-show="nameGetShow"
               placeholder="套餐名称"
+              @blur="checkNeedVip"
             />
           </NFormItem>
-          <NFormItem label="字数" path="wordNum">
-            <NInputNumber v-model:value="formParams.wordNum" placeholder="字数" style="width: 100%;">
+          <NFormItem label="字数" path="wordnum">
+            <NInputNumber v-model:value="formParams.wordnum" placeholder="字数" style="width: 100%;">
               <template #suffix>
                 万
               </template>
             </NInputNumber>
           </NFormItem>
-          <NFormItem label="原价" path="originPrice" type="number">
-            <NInput v-model:value="formParams.originPrice" placeholder="原价" />
+          <NFormItem label="原价" path="originprice" type="number">
+            <NInputNumber v-model:value="formParams.originprice" placeholder="原价" style="width: 100%;" />
           </NFormItem>
-          <NFormItem label="现价" path="nowPrice" type="number">
-            <NInputNumber v-model:value="formParams.nowPrice" placeholder="现价" style="width: 100%;">
+          <NFormItem label="现价" path="nowprice" type="number">
+            <NInputNumber v-model:value="formParams.nowprice" placeholder="现价" style="width: 100%;">
               <template #suffix>
                 元
               </template>
@@ -142,6 +234,16 @@ function confirmForm(e: { preventDefault: () => void }) {
           </NFormItem>
           <NFormItem label="描述" path="description">
             <NInput v-model:value="formParams.description" type="textarea" placeholder="描述" />
+          </NFormItem>
+          <NFormItem label="会员制">
+            <NSwitch v-model:value="formParams.needvip" :unchecked-value="0" :checked-value="1">
+              <template #checked>
+                此套餐需先开通会员
+              </template>
+              <template #unchecked>
+                此套餐无需开通会员
+              </template>
+            </NSwitch>
           </NFormItem>
         </NForm>
 
@@ -156,7 +258,9 @@ function confirmForm(e: { preventDefault: () => void }) {
           </NSpace>
         </template>
       </NModal>
-      <NewTable />
+      <NSpin :show="loading">
+        <NewTable :pro-list="productlistShow" @delete-item="deleteItem" />
+      </NSpin>
     </NSpace>
   </NCard>
 </template>
