@@ -6,9 +6,12 @@ import type { DataTableColumns } from 'naive-ui'
 const message = useMessage()
 
 interface Song {
-  no: number
-  title: string
-  length: string
+  id: number
+  name: string
+  wordNum: number
+  orginPrice: number
+  nowPrice: number
+  description: string
 }
 
 const createColumns = ({
@@ -18,19 +21,31 @@ const createColumns = ({
 }): DataTableColumns<Song> => {
   return [
     {
-      title: 'No',
-      key: 'no',
+      title: 'id',
+      key: 'id',
     },
     {
-      title: 'Title',
-      key: 'title',
+      title: '套餐名称',
+      key: 'name',
     },
     {
-      title: 'Length',
-      key: 'length',
+      title: '字数',
+      key: 'wordNum',
     },
     {
-      title: 'Action',
+      title: '原价',
+      key: 'orginPrice',
+    },
+    {
+      title: '现价',
+      key: 'nowPrice',
+    },
+    {
+      title: '描述',
+      key: 'description',
+    },
+    {
+      title: '操作',
       key: 'actions',
       render(row) {
         return h(
@@ -41,7 +56,7 @@ const createColumns = ({
             size: 'small',
             onClick: () => play(row),
           },
-          { default: () => 'Play' },
+          { default: () => '删除' },
         )
       },
     },
@@ -49,14 +64,14 @@ const createColumns = ({
 }
 
 const data: Song[] = [
-  { no: 3, title: 'Wonderwall', length: '4:18' },
-  { no: 4, title: 'Don\'t Look Back in Anger', length: '4:48' },
-  { no: 12, title: 'Champagne Supernova', length: '7:27' },
+  { id: 3, name: '周会员', wordNum: 12323, orginPrice: 12, nowPrice: 35.3, description: '死定了开发商两地分居的基辅罗斯大嫁风尚水电费水电费乐山大佛乐山大佛进水了的开发惊世毒妃\r\n双丰收了' },
+  { id: 3, name: '周会员', wordNum: 12343, orginPrice: 12, nowPrice: 35, description: 'sdfs' },
+  { id: 3, name: '周会员', wordNum: 35353, orginPrice: 12, nowPrice: 35, description: 'sdfs' },
 ]
 
 const columns = createColumns({
   play(row: Song) {
-    message.info(`Play ${row.title}`)
+    message.info(`Play ${row.name}`)
   },
 })
 const pagination = false as const
