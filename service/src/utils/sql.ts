@@ -113,6 +113,25 @@ export async function getTotalVisits() {
   }
 }
 
+export async function getAllOrderStatis() {
+  let querySql = 'SELECT COUNT(DISTINCT id) AS total_order, SUM(orderprice) AS total_money FROM GPTUserOrderInfo WHERE orderstate = 1'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [total_result] = await connection.query(querySql)
+    querySql = `SELECT COUNT(DISTINCT id) AS weak_order, SUM(orderprice) AS weak_money FROM GPTUserOrderInfo WHERE
+createtime BETWEEN DATE_SUB(NOW(), INTERVAL 7 DAY) AND NOW() AND orderstate = 1`
+    const [weak_result] = await connection.query(querySql)
+    return { total_result: total_result[0], weak_result: weak_result[0] }
+  }
+  catch (error) {
+    console.error(`Error querying database: ${error.stack}`)
+  }
+  finally {
+    connection.release()
+  }
+}
+
 // 生成随机字符串
 function randomString(length) {
   const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
