@@ -4,8 +4,8 @@ import mysql from 'mysql2/promise'
 import { getTodayDate } from './dateAuth'
 
 const pool = mysql.createPool({
-  host: 'mysql',
-  // host: 'localhost',
+  // host: 'mysql',
+  host: 'localhost',
   port: 3306,
   user: 'houp',
   password: '624634',
@@ -38,11 +38,16 @@ export interface UserOrderInfo {
   ordertype: number
 }
 
-// export interface OrderProductInfo {
-// id: number
-// username: string
-// productid
-// }
+export interface OrderProductInfo {
+  id: number
+  name: string
+  wordnum: number
+  originprice: number
+  nowprice: number
+  description: string
+  reserve: string
+  needvip: number
+}
 
 interface AdminInfo {
   userid: number
@@ -56,6 +61,8 @@ export enum OrderStatus {
   Refunded = 2, // 已退款
   Cancelled = 3, // 已取消
 }
+
+const supportVipOption = ['周会员', '月会员', '季会员', '年会员']
 
 // 缓存数据接口
 interface VisitCache {
@@ -487,7 +494,6 @@ export async function getUserOrderInfoByOrderid(orderid: string, openid: string,
     querySql = 'SELECT * FROM GPTUserOrderInfo where openid = ? and orderid = ?'
     queryId = openid
   }
-
   let connection: PoolConnection
   try {
     connection = await pool.getConnection()
@@ -505,24 +511,6 @@ export async function getUserOrderInfoByOrderid(orderid: string, openid: string,
   }
 }
 
-// productid 必填
-export async function getProductInfoByProductId(productid: string) {
-  const querySql = 'SELECT * FROM GPTUserOrderInfo where productid = ?'
-
-  // let connection: PoolConnection
-  // try {
-  //   connection = await pool.getConnection()
-  //   const [results] = await connection.query(querySql)
-  //   const [productInfo] = results as OrderProductInfo[]
-  //   if (productInfo)
-  //     return productInfo as OrderProductInfo
-  // return null
-  // }
-  // finally {
-  //   connection.release()
-  // }
-}
-
 export async function updateUserOrderInfoByOrderId(username: string, openid: string, orderid: string, orderstate: OrderStatus) {
   let queryId = openid
   let updateSql = 'update GPTUserOrderInfo set orderstate=? where openid=? and orderid=?'
@@ -537,12 +525,39 @@ export async function updateUserOrderInfoByOrderId(username: string, openid: str
     const orderinfo = await getUserOrderInfoByOrderid(orderid, openid, '')
 
     if (orderinfo.orderstate !== orderstate) {
+      // 更新订单表
       await connection.query(updateSql, [orderstate, queryId, orderid])
       if (orderstate === OrderStatus.Paid) {
         // 根据prodcutid去表里查是什么产品
+        const productInfo: OrderProductInfo = await getProductInfoByProductId(orderinfo.productid)
+        // 判断是不是会员产品
+        // 构造sql 执行更新
+        let updateSql: string
+        let interval
+        if (productInfo.name === supportVipOption[0]) {
+          interval = '7 DAY'
+          updateSql = 'UPDATE GPTUserInfo SET vipendday=IF(COALESCE(vipendday, \'1970-01-01\') < CURRENT_DATE(), DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), DATE_ADD(vipendday, INTERVAL 7 DAY)), usagecount=usagecount+? WHERE openid=?'
+        }
+        else if (productInfo.name === supportVipOption[1]) {
+          interval = '1 MONTH'
+          updateSql = 'UPDATE GPTUserInfo SET vipendday=IF(COALESCE(vipendday, \'1970-01-01\') < CURRENT_DATE(), DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 1 MONTH), DATE_ADD(vipendday, INTERVAL 1 MONTH)), usagecount=usagecount+? WHERE openid=?'
+        }
+        else if (productInfo.name === supportVipOption[2]) {
+          interval = '1 QUARTER'
+          updateSql = 'UPDATE GPTUserInfo SET vipendday=IF(COALESCE(vipendday, \'1970-01-01\') < CURRENT_DATE(), DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 1 QUARTER), DATE_ADD(vipendday, INTERVAL 1 QUARTER)), usagecount=usagecount+? WHERE openid=?'
+        }
+        else if (productInfo.name === supportVipOption[3]) {
+          interval = '1 YEAR'
+          updateSql = 'UPDATE GPTUserInfo SET vipendday=IF(COALESCE(vipendday, \'1970-01-01\') < CURRENT_DATE(), DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 1 YEAR), DATE_ADD(vipendday, INTERVAL 1 YEAR)), usagecount=usagecount+? WHERE openid=?'
+        }
 
-        const updateSql = 'update GPTUserInfo set usagecount = usagecount + 0.001 where openid=?'
-        await connection.query(updateSql, [openid])
+        if (interval !== '-1') {
+          await connection.query(updateSql, [productInfo.wordnum, openid])
+        }
+        else {
+          updateSql = 'update GPTUserInfo set usagecount = usagecount + ?, isVip = ? where openid=?'
+          await connection.query(updateSql, [productInfo.wordnum, productInfo.needvip, openid])
+        }
       }
     }
   }
@@ -570,6 +585,78 @@ export async function deleteAllUserOrderUncomplete(openid: string, username: str
   }
   catch {
 
+  }
+  finally {
+    connection.release()
+  }
+}
+
+// 产品相关
+export async function addAProductInfo(product: OrderProductInfo) {
+  let connection: PoolConnection
+  let params: any[]
+  try {
+    connection = await pool.getConnection()
+    let sql: string
+    if (!product.id || product.id < 0) {
+      // 插入
+      sql = `INSERT INTO GPTProductInfo (name, wordnum, originprice, nowprice, description, reserve, needvip)
+VALUES (?, ?, ?, ?, ?, ?, ?)`
+      params = [product.name, product.wordnum, product.originprice, product.nowprice,
+        product.description, product.reserve, product.needvip]
+    }
+    else {
+      // 更新
+      sql = `UPDATE GPTProductInfo SET name=?, wordnum=?, originprice=?, nowprice=?,
+description=?, reserve=?, needvip=? WHERE id=?`
+      params = [product.name, product.wordnum, product.originprice, product.nowprice,
+        product.description, product.reserve, product.needvip, product.id]
+    }
+    await connection.query(sql, params)
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function removeAProductInfo(productid: number) {
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const sql = 'DELETE FROM GPTProductInfo WHERE id=?'
+    await connection.query(sql, [productid])
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function queryAllProductInfo() {
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const sql = 'SELECT * FROM GPTProductInfo'
+    const [results] = await connection.query(sql)
+    const resultData = results as OrderProductInfo[]
+    return resultData
+  }
+  finally {
+    connection.release()
+  }
+}
+
+// productid 必填
+export async function getProductInfoByProductId(productid: number) {
+  const querySql = 'SELECT * FROM GPTProductInfo where id = ?'
+
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [results] = await connection.query(querySql, [productid])
+    const [productInfo] = results as OrderProductInfo[]
+    if (productInfo)
+      return productInfo as OrderProductInfo
+    return null
   }
   finally {
     connection.release()

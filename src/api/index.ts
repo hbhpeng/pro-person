@@ -156,6 +156,12 @@ export function adminChangePassword<T>(username: string, oldpw: string, newpw: s
   })
 }
 
+export function reqProductList<T>() {
+  return post<T>({
+    url: '/product/query',
+  })
+}
+
 export function getSingleUserInfo<T>() {
   return post<T>({
     url: '/user/getuserinfo',
@@ -176,15 +182,17 @@ export function userWithScanIsLogin<T>() {
   })
 }
 
-export function userWitchScanPayUrls<T>() {
+export function userWitchScanPayUrls<T>(productid: string) {
   return post<T>({
     url: '/user/payurl',
+    data: { productid },
   })
 }
 
-export function userGetProductPayParams<T>() {
+export function userGetProductPayParams<T>(productid: string) {
   return post<T>({
     url: '/user/get_pay_params',
+    data: { productid },
   })
 }
 
@@ -226,7 +234,7 @@ export function makePPTRequest<T>(topic: string, length: string) {
 export function downloadPPTRequest<T>() {
   return post<T>({
     url: '/file/downloadppt',
-    data: { },
+    data: {},
     responseType: 'blob',
   })
 }

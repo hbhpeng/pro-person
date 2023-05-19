@@ -2,6 +2,14 @@
 import { NCard, NCol, NRow, NTabPane, NTabs } from 'naive-ui'
 import FluxTrend from './FluxTrend.vue'
 import VisitAmount from './VisitAmount.vue'
+import type { ChartOption } from './props'
+
+interface ChartData {
+  trendData: ChartOption
+  visitData: ChartOption
+}
+
+const chartData = defineProps<ChartData>()
 </script>
 
 <template>
@@ -11,10 +19,10 @@ import VisitAmount from './VisitAmount.vue'
         <NCard content-style="padding: 0;" :bordered="false">
           <NTabs type="line" size="large" :tabs-padding="20" pane-style="padding: 20px;">
             <NTabPane name="流量趋势">
-              <FluxTrend />
+              <FluxTrend :chart-data="chartData.trendData" />
             </NTabPane>
             <NTabPane name="访问量">
-              <VisitAmount />
+              <VisitAmount :chart-data="chartData.visitData" />
             </NTabPane>
           </NTabs>
         </NCard>

@@ -48,6 +48,7 @@ const personVwShow = ref(false)
 const aiPPTShow = ref(false)
 const payShow = ref(false)
 const orderImgShow = ref(false)
+const payId = ref('')
 
 if (!userToken)
   loginBtShow.value = true
@@ -133,7 +134,8 @@ const showChongZhi = () => {
   payShow.value = true
 }
 
-const createOrder = () => {
+const createOrder = (productid: string) => {
+  payId.value = productid
   payShow.value = false
   orderImgShow.value = true
 }
@@ -215,5 +217,5 @@ const moreFunctions = () => {
   <PersonInfo v-model:visible="personVwShow" @become-vip="userWantVip" />
   <MakePPT v-model:visible="aiPPTShow" />
   <ProductPay v-model:visible="payShow" @create-order="createOrder" @pay-should-login="payShouldLogin" />
-  <OrderQrcode v-model:visible="orderImgShow" />
+  <OrderQrcode v-model:visible="orderImgShow" :productid="payId" />
 </template>

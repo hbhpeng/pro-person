@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { NButton, NCard, NForm, NFormItem, NIcon, NInput, NModal, NSpace } from 'naive-ui'
+import { computed, reactive, ref } from 'vue'
+import { NAutoComplete, NButton, NCard, NForm, NFormItem, NIcon, NInput, NInputNumber, NModal, NSpace } from 'naive-ui'
 import { PlusOutlined } from '@vicons/antd'
 import { type FormRules } from 'naive-ui'
 import NewTable from './NewTable.vue'
@@ -23,28 +23,57 @@ const rules: FormRules = {
   name: {
     required: true,
     trigger: ['blur', 'input'],
-    message: '套餐名称',
+    message: '请输入套餐名称',
   },
   wordNum: {
+    type: 'number',
     required: true,
     trigger: ['blur', 'input'],
-    message: '字数',
+    message: '请输入字数',
   },
   originPrice: {
-    required: true,
+    required: false,
     trigger: ['blur', 'input'],
-    message: '原价',
+    message: '可以不用数字',
   },
   nowPrice: {
+    type: 'number',
     required: true,
     trigger: ['blur', 'input'],
-    message: '现价',
+    message: '请输入价格',
   },
   description: {
     required: true,
     trigger: ['blur', 'input'],
-    message: '描述',
+    message: '给点描述吧',
   },
+}
+
+interface VipOption {
+  name: string
+  long: number // 1: 7天 2: 1个月 3: 1个季度 4: 1年
+}
+
+const getVipOption = (name: string, long: number) => {
+  return { name, long }
+}
+
+const packageVipOptions: VipOption[] = [getVipOption('周会员', 1), getVipOption('月会员', 2), getVipOption('季会员', 3), getVipOption('年会员', 4)]
+
+const nameOptions = computed(() => {
+  const result = packageVipOptions.filter((value) => {
+    return value.name.startsWith(formParams.name)
+  })
+  return result.map((value) => {
+    return {
+      label: value.name,
+      value: value.name,
+    }
+  })
+})
+
+const nameGetShow = (value: string) => {
+  return true
 }
 
 function confirmForm(e: { preventDefault: () => void }) {
@@ -87,18 +116,31 @@ function confirmForm(e: { preventDefault: () => void }) {
           class="py-4"
         >
           <NFormItem label="套餐名称" path="name">
-            <NInput v-model:value="formParams.name" placeholder="套餐名称" />
+            <NAutoComplete
+              v-model:value="formParams.name"
+              :options="nameOptions"
+              :get-show="nameGetShow"
+              placeholder="套餐名称"
+            />
           </NFormItem>
-          <NFormItem label="字数" path="address">
-            <NInput v-model:value="formParams.wordNum" placeholder="字数" />
+          <NFormItem label="字数" path="wordNum">
+            <NInputNumber v-model:value="formParams.wordNum" placeholder="字数" style="width: 100%;">
+              <template #suffix>
+                万
+              </template>
+            </NInputNumber>
           </NFormItem>
-          <NFormItem label="原价" path="address" type="number">
+          <NFormItem label="原价" path="originPrice" type="number">
             <NInput v-model:value="formParams.originPrice" placeholder="原价" />
           </NFormItem>
-          <NFormItem label="现价" path="address" type="number">
-            <NInput v-model:value="formParams.nowPrice" placeholder="现价" />
+          <NFormItem label="现价" path="nowPrice" type="number">
+            <NInputNumber v-model:value="formParams.nowPrice" placeholder="现价" style="width: 100%;">
+              <template #suffix>
+                元
+              </template>
+            </NInputNumber>
           </NFormItem>
-          <NFormItem label="描述" path="address">
+          <NFormItem label="描述" path="description">
             <NInput v-model:value="formParams.description" type="textarea" placeholder="描述" />
           </NFormItem>
         </NForm>

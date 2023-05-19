@@ -4,6 +4,10 @@ export interface BasicProps {
   width: string
   height: string
 }
+export interface ChartOption {
+  xAsix: Array<string>
+  yAsix: Array<number>
+}
 
 export const basicProps = {
   width: {
@@ -13,5 +17,9 @@ export const basicProps = {
   height: {
     type: String as PropType<string>,
     default: '280px',
+  },
+  chartData: {
+    type: Object as () => ChartOption,
+    default: [],
   },
 }

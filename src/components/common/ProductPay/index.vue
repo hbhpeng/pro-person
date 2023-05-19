@@ -25,6 +25,7 @@ const props = defineProps < Props > ()
 const emits = defineEmits < Emit > ()
 const authStore = useAuthStoreWithout()
 let userToken = authStore.$state.userToken
+let productid = ''
 
 watch(
   () => authStore.$state.userToken,
@@ -39,7 +40,7 @@ const ms = useMessage()
 const loading = ref(false)
 
 interface Emit {
-  (e: 'createOrder'): void
+  (e: 'createOrder', productid: string): void
   (e: 'update:visible', visible: boolean): void
   (e: 'payShouldLogin'): void
 }
@@ -68,7 +69,7 @@ const initPayParams = async () => {
   try {
     const {
       data,
-    } = await userGetProductPayParams()
+    } = await userGetProductPayParams(productid)
     const dataObject = JSON.parse(data as string)
     // 初始化支付参数return { appId, timeStamp, nonceStr, packageStr, signType, signature }
     payParams.value = {
@@ -122,16 +123,18 @@ async function closeAndCreateOrder() {
       pay()
     }
     catch (error: any) {
+      showModal.value = false
       ms.error(error.message)
     }
   }
   else {
-    emits('createOrder')
+    emits('createOrder', productid)
   }
 }
 
 async function userWantPay(product: any) {
   // console.log(product)
+  productid = product
   if (!userToken) {
     ms.info('请先登录吧')
     emits('payShouldLogin')
@@ -158,7 +161,7 @@ async function userWantPay(product: any) {
 }
 
 function bindSuccess() {
-  userWantPay('123')
+  userWantPay(productid)
   showWechat.value = false
 }
 </script>

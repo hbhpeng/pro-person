@@ -36,6 +36,7 @@ interface Emit {
 }
 interface Props {
   visible: boolean
+  productid: string
 }
 const loading = ref(false)
 const qrcodeDataUrl = ref('')
@@ -53,7 +54,7 @@ const getOrderWxImage = async () => {
     const {
       message: url,
       data,
-    } = await userWitchScanPayUrls()
+    } = await userWitchScanPayUrls(props.productid)
     const result = JSON.parse(data as string)
     orderId.value = result.orderId
     // @ts-expect-error library need
@@ -74,7 +75,8 @@ const getOrderWxImage = async () => {
     // startQueryLoginInfo()
   }
   catch (error: any) {
-
+    ms.error(error.message)
+    showModal.value = false
   }
   finally {
     loading.value = false

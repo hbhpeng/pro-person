@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { NCard, NGi, NGrid, NIcon } from 'naive-ui'
+import { NCard, NGi, NGrid, NIcon, NNumberAnimation, NTag, useMessage } from 'naive-ui'
 import { GithubOutlined } from '@vicons/antd'
-import { reactive } from 'vue'
+import { computed, ref } from 'vue'
 import VisiTab from './components/VisiTab.vue'
 import {
   adminGetTotalOrderReq,
@@ -34,6 +34,8 @@ interface TotalOrderReqData {
   weak_result: WeekResut
 }
 
+const ms = useMessage()
+
 const defalutData: TotalVisitReqData = {
   total_result: { total_visits: '9' },
   hour_result: [{ hour: 16, count: '4' }, { hour: 17, count: '2' }],
@@ -41,24 +43,118 @@ const defalutData: TotalVisitReqData = {
 }
 
 const defalutOrderData: TotalOrderReqData = {
-  total_result: { total_order: 0, total_money: 132 },
-  weak_result: { weak_order: 0, weak_money: 345 },
+  total_result: { total_order: 100000, total_money: 132 },
+  weak_result: { weak_order: 2008877, weak_money: 345 },
 }
 
-let totalVisitData: TotalVisitReqData = reactive(defalutData)
-let totalOrderData: TotalOrderReqData = reactive(defalutOrderData)
+const totalVisitData = ref<TotalVisitReqData>() // reactive(defalutData)
+const totalOrderData = ref<TotalOrderReqData>()
+
+const totalVisitShow = computed(() => {
+  if (totalVisitData.value?.total_result?.total_visits)
+    return parseInt(totalVisitData.value?.total_result?.total_visits)
+  return 0
+})
+
+const dayVisitShow = computed(() => {
+  if (totalVisitData.value?.hour_result) {
+    const result = totalVisitData.value.hour_result.reduce((pre, cur) => {
+      return { hour: -1, count: (parseInt(pre.count) + parseInt(cur.count)).toString() }
+    }, { hour: -1, count: '0' })
+    return parseInt(result.count)
+  }
+  return 0
+})
+
+const totalSaleMoneyShow = computed(() => {
+  if (totalOrderData.value?.total_result.total_money)
+    return totalOrderData.value.total_result.total_money
+
+  return 0
+})
+
+const weakSaleMoneyShow = computed(() => {
+  if (totalOrderData.value?.weak_result.weak_money)
+    return totalOrderData.value.weak_result.weak_money
+
+  return 0
+})
+
+const totalOrderShow = computed(() => {
+  if (totalOrderData.value?.total_result.total_order)
+    return totalOrderData.value.total_result.total_order
+
+  return 0
+})
+
+const weakOrderShow = computed(() => {
+  if (totalOrderData.value?.weak_result.weak_order)
+    return totalOrderData.value.weak_result.weak_order
+
+  return 0
+})
+
+const hourCharData = computed(() => {
+  if (totalVisitData.value?.hour_result && totalVisitData.value?.hour_result.length > 0) {
+    const data = totalVisitData.value?.hour_result
+    const maxHour = Math.max(...data.map(d => d.hour))
+    const defaultData = []
+
+    for (let i = 0; i <= maxHour; i++) {
+      const item = { hour: i, count: '0' }
+      defaultData.push(item)
+    }
+
+    const existingItems: { [key: number]: HourResult } = {}
+    data.forEach((d) => {
+      existingItems[d.hour] = d
+    })
+
+    const result = defaultData.map(d => existingItems[d.hour] || d)
+
+    const hours = result.map(d => d.hour)
+    const counts = result.map(d => parseInt(d.count, 10))
+    return { xAsix: hours, yAsix: counts }
+  }
+  return { xAsix: [], yAsix: [] }
+})
+
+const monthCharData = computed(() => {
+  if (totalVisitData.value?.month_result && totalVisitData.value?.month_result.length > 0) {
+    const data = totalVisitData.value?.month_result
+    const maxMonth = Math.max(...data.map(d => d.month))
+    const defaultData = []
+
+    for (let i = 1; i <= maxMonth; i++) {
+      const item = { month: i, count: '0' }
+      defaultData.push(item)
+    }
+
+    const existingItems: { [key: number]: MonthResult } = {}
+    data.forEach((d) => {
+      existingItems[d.month] = d
+    })
+
+    const result = defaultData.map(d => existingItems[d.month] || d)
+
+    const months = result.map(d => d.month)
+    const counts = result.map(d => parseInt(d.count, 10))
+    return { xAsix: months, yAsix: counts }
+  }
+  return { xAsix: [], yAsix: [] }
+})
 
 async function getTotalVisitReq() {
   try {
     const { data } = await adminGetTotalVisitReq()
     const result = JSON.parse(data as string)
-    totalVisitData = reactive(result)
-    // eslint-disable-next-line no-console
-    console.log(result)
+    totalVisitData.value = result
+
+    // console.log(result)
   }
   catch (error: any) {
-    // eslint-disable-next-line no-console
-    console.log(error.message)
+    // console.log(error.message)
+    ms.error('查询失败，请尝试刷新页面')
   }
 }
 
@@ -66,13 +162,13 @@ async function getTotalOrderReq() {
   try {
     const { data } = await adminGetTotalOrderReq()
     const result = JSON.parse(data as string)
-    totalOrderData = reactive(result)
-    // eslint-disable-next-line no-console
-    console.log(result)
+    totalOrderData.value = result
+
+    // console.log(result)
   }
   catch (error: any) {
-    // eslint-disable-next-line no-console
-    console.log(error.message)
+    // console.log(error.message)
+    ms.error('查询失败，请尝试刷新页面')
   }
 }
 getTotalVisitReq()
@@ -80,108 +176,147 @@ getTotalOrderReq()
 </script>
 
 <template>
-  <NGrid x-gap="12" :cols="4">
-    <NGi>
-      <NCard
-        title="总订单量"
-        size="small"
-        class="cursor-pointer project-card-item ms:w-1/2 md:w-1/3"
-        hoverable
-      >
-        <div class="flex">
-          <span>
-            <NIcon size="30">
-              <GithubOutlined />
-            </NIcon>
-          </span>
-          <span class="text-lg ml-4">{{ totalVisitData?.total_result?.total_visits }}</span>
-        </div>
-      </NCard>
-    </NGi>
-    <NGi>
-      <NCard
-        title="总金额"
-        size="small"
-      >
-        <div class="flex">
-          <span>
-            <NIcon size="30">
-              <GithubOutlined />
-            </NIcon>
-          </span>
-          <span class="text-lg ml-4">{{ totalOrderData?.total_result?.total_order }}</span>
-        </div>
-      </NCard>
-    </NGi>
-    <NGi>
-      <NCard
-        title="周订单量"
-        size="small"
-      >
-        <div class="flex">
-          <span>
-            <NIcon size="30">
-              <GithubOutlined />
-            </NIcon>
-          </span>
-          <span class="text-lg ml-4">{{ totalOrderData?.weak_result?.weak_money }}</span>
-        </div>
-      </NCard>
-    </NGi>
-    <NGi>
-      <NCard
-        title="周金额"
-        size="small"
-      >
-        <div class="flex">
-          <span>
-            <NIcon size="30">
-              <GithubOutlined />
-            </NIcon>
-          </span>
-          <span class="text-lg ml-4">345435</span>
-        </div>
-      </NCard>
-    </NGi>
-  </NGrid>
-  <div class="echart">
-    <VisiTab />
+  <div>
+    <NGrid x-gap="12" :cols="3">
+      <NGi>
+        <NCard title="访问量" size="small" class="cursor-pointer project-card-item ms:w-1/2 md:w-1/3" hoverable>
+          <div class="flex">
+            <span>
+              <NIcon size="30">
+                <GithubOutlined />
+              </NIcon>
+            </span>
+            <span class="text-2xl ml-4">
+              <NNumberAnimation show-separator :from="0" :to="dayVisitShow" :active="dayVisitShow > 0" />
+            </span>
+          </div>
+
+          <template #header-extra>
+            <NTag type="success">
+              日
+            </NTag>
+          </template>
+          <template #footer>
+            <div class="flex justify-between">
+              <div class="text-sn">
+                总访问量：
+              </div>
+              <div class="text-sn">
+                <!-- <CountTo :startVal="1" :endVal="visits.amount" /> -->
+                <NNumberAnimation show-separator :from="0" :to="totalVisitShow" :active="totalVisitShow > 0" />
+              </div>
+            </div>
+          </template>
+        </NCard>
+      </NGi>
+      <NGi>
+        <NCard title="销售额" size="small">
+          <div class="flex">
+            <span>
+              <NIcon size="30">
+                <GithubOutlined />
+              </NIcon>
+            </span>
+            <span class="text-2xl ml-4">
+              <NNumberAnimation show-separator :from="0" :to="weakSaleMoneyShow" :active="weakSaleMoneyShow > 0" />
+            </span>
+          </div>
+
+          <template #header-extra>
+            <NTag type="info">
+              周
+            </NTag>
+          </template>
+          <template #footer>
+            <div class="flex justify-between">
+              <div class="text-sn">
+                总销售额：
+              </div>
+              <div class="text-sn">
+                <!-- <CountTo :startVal="1" :endVal="visits.amount" /> -->
+                <span>￥</span>
+                <NNumberAnimation show-separator :from="0" :to="totalSaleMoneyShow" :active="totalSaleMoneyShow > 0" />
+              </div>
+            </div>
+          </template>
+        </NCard>
+      </NGi>
+      <NGi>
+        <NCard title="订单量" size="small">
+          <div class="flex">
+            <span>
+              <NIcon size="30">
+                <GithubOutlined />
+              </NIcon>
+            </span>
+            <span class="text-2xl ml-4">
+              <NNumberAnimation show-separator :from="0" :to="weakOrderShow" :active="weakOrderShow > 0" />
+            </span>
+          </div>
+
+          <template #header-extra>
+            <NTag type="info">
+              周
+            </NTag>
+          </template>
+          <template #footer>
+            <div class="flex justify-between">
+              <div class="text-sn">
+                总订单量：
+              </div>
+              <div class="text-sn">
+                <!-- <CountTo :startVal="1" :endVal="visits.amount" /> -->
+                <NNumberAnimation show-separator :from="0" :to="totalOrderShow" :active="totalOrderShow > 0" />
+              </div>
+            </div>
+          </template>
+        </NCard>
+      </NGi>
+    </NGrid>
+    <div class="echart">
+      <VisiTab :trend-data="hourCharData" :visit-data="monthCharData" />
+    </div>
   </div>
 </template>
 
 <style lang="less" scoped>
-  .workplace{
-    display: flex;
-    flex-direction: column;
-  }
-  .container{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-  .row-container{
-    background-color: white;
-     width: 20%;
-    display: flex;
-    flex-direction: row;
-    justify-content: left;
-    padding:20px;
-  }
-  .col-container{
-    width: 300px;
-    height: 100px;
-    background-color: white;
-  }
-  .echart{
-    background-color: white;
-  }
-
-  .light-green {
-  height: 108px;
-  background-color: rgba(0, 128, 0, 0.12);
+.workplace {
+display: flex;
+flex-direction: column;
 }
+
+.container {
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+}
+
+.row-container {
+background-color: white;
+width: 20%;
+display: flex;
+flex-direction: row;
+justify-content: left;
+padding: 20px;
+}
+
+.col-container {
+width: 300px;
+height: 100px;
+background-color: white;
+}
+
+.echart {
+background-color: white;
+}
+
+.light-green {
+height: 108px;
+background-color: rgba(0, 128, 0, 0.12);
+}
+
 .green {
-  height: 108px;
-  background-color: rgba(0, 128, 0, 0.24);
+height: 108px;
+background-color: rgba(0, 128, 0, 0.24);
 }
 </style>

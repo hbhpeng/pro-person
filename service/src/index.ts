@@ -6,6 +6,7 @@ import express from 'express'
 import midjourney from 'midjourney-client'
 import xmlparser from 'express-xml-bodyparser'
 import { v4 as uuidv4 } from 'uuid'
+import moment from 'moment'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
 import { chatConfig, chatReplyProcess, currentModel, initChatGPTApi } from './chatgpt'
@@ -61,6 +62,12 @@ app.all('*', (_, res, next) => {
   next()
 })
 
+function checkUserIsOutDate(endday: any) {
+  if (!endday)
+    return true
+  return moment(endday).unix() <= Date.now()
+}
+
 async function chatCheck(req, res, prompt, extraPrice = 0) {
   if (isExpire)
     throw new Error('服务时间已过期，请续费')
@@ -69,6 +76,8 @@ async function chatCheck(req, res, prompt, extraPrice = 0) {
   if (!username || username.length < 5)
     throw new Error('您不能发送消息，请先登录，如果已经登录请重新登录')
   const userInfo = await getUserInfo(username)
+  if (userInfo.isVip > 0 && checkUserIsOutDate(userInfo.vipendday))
+    throw new Error('您还不是会员，请先开通会员吧')
   if (userInfo.usecount + extraPrice - userInfo.usagecount >= 0.0)
     throw new Error('您的字数不足，请购买字数包')
 
@@ -182,6 +191,49 @@ router.post('/verify', async (req, res) => {
   }
   catch (error) {
     res.send({ status: 'Fail', message: error.message, data: null })
+  }
+})
+
+// 产品相关
+router.post('/product/add', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { ...productInfo } = req.body as SqlOperate.OrderProductInfo
+    if (!productInfo.name)
+      throw new Error('产品名称不能为空')
+    await SqlOperate.addAProductInfo(productInfo)
+    res.send({ status: 'Success', message: '操作成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/product/query', async (req, res) => {
+  try {
+    const productInfos: SqlOperate.OrderProductInfo[] = await SqlOperate.queryAllProductInfo()
+    res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(productInfos) })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/product/delete', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { ...productInfo } = req.body as SqlOperate.OrderProductInfo
+    if (!productInfo.id)
+      throw new Error('产品id不能为空')
+    await SqlOperate.removeAProductInfo(productInfo.id)
+    res.send({ status: 'Success', message: '删除成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
   }
 })
 
@@ -709,7 +761,7 @@ router.post('/wxpay/notify', async (req, res) => {
     res.send(wechatApi.replyPayData(error.message))
   }
 })
-
+// 支付的两种方法
 router.post('/user/payurl', async (req, res) => {
   // const { question } = req.body as { question: string }
 
@@ -720,21 +772,27 @@ router.post('/user/payurl', async (req, res) => {
       return
     }
 
+    const { productid } = req.body as { productid: string }
+    const productInfo = await SqlOperate.getProductInfoByProductId(parseInt(productid))
     const user: UserInfo = await getUserInfo(username)
     if (!user || !user.openid)
       throw new Error('请先关注或者扫描公众号绑定账号')
+    if (productInfo.needvip > 0) {
+      if (checkUserIsOutDate(user.vipendday))
+        throw new Error('您现在还不是会员哦')
+    }
     const orderId = uuidv4().slice(0, 8) + uuidv4().slice(-8)
-    const productId = '333333'
     const openid = user.openid
     await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
-    await SqlOperate.createAnOrderInfo(username, openid, productId, orderId)
+    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId)
+    const orderPrice = Math.floor(productInfo.nowprice * 100)
     const { prepay_id, code_url } = await wechatApi.payApi.unifiedOrder({
       out_trade_no: orderId,
-      body: '测试商品',
-      total_fee: '1',
+      body: productInfo.name,
+      total_fee: orderPrice.toString(),
       openid,
       trade_type: 'NATIVE',
-      product_id: productId,
+      product_id: productid,
     })
 
     if (code_url)
@@ -758,17 +816,22 @@ router.post('/user/get_pay_params', async (req, res) => {
       return
     }
 
+    const { productid } = req.body as { productid: string }
+    const productInfo = await SqlOperate.getProductInfoByProductId(parseInt(productid))
     const user: UserInfo = await getUserInfo(username)
     if (!user || !user.openid)
       throw new Error('请先关注或者扫描公众号绑定账号')
+    if (productInfo.needvip > 0) {
+      if (checkUserIsOutDate(user.vipendday))
+        throw new Error('您现在还不是会员哦')
+    }
     const orderId = uuidv4().slice(0, 8) + uuidv4().slice(-8)
-    const productId = '333333'
     const openid = user.openid
-
+    const orderPrice = Math.floor(productInfo.nowprice * 100)
     const result = await wechatApi.payApi.unifiedOrder({
       out_trade_no: orderId,
-      body: '商品简单描述',
-      total_fee: '1',
+      body: productInfo.name,
+      total_fee: orderPrice.toString(),
       openid,
     })
 
@@ -776,7 +839,7 @@ router.post('/user/get_pay_params', async (req, res) => {
       throw new Error('预支付交易错误')
 
     await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
-    await SqlOperate.createAnOrderInfo(username, openid, productId, orderId)
+    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId)
 
     const prepay_id = result.prepay_id
     const paramData = wechatApi.getWechatPayParam(prepay_id)
