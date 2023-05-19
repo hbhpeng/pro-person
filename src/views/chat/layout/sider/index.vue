@@ -31,7 +31,7 @@ import {
   PromptStore,
   UserInfo,
 } from '@/components/common'
-import { router } from '@/router'
+// import { router } from '@/router'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
@@ -151,9 +151,9 @@ const userWantVip = () => {
   payShow.value = true
 }
 
-const moreFunctions = () => {
-  router.push({ name: 'morev' })
-}
+// const moreFunctions = () => {
+// router.push({ name: 'morev' })
+// }
 </script>
 
 <template>

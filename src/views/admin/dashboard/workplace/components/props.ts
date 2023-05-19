@@ -5,8 +5,8 @@ export interface BasicProps {
   height: string
 }
 export interface ChartOption {
-  xAsix: Array<string>
-  yAsix: Array<number>
+  xAsix: Array<string | number>
+  yAsix: Array<string | number>
 }
 
 export const basicProps = {

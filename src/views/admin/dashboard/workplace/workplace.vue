@@ -36,16 +36,16 @@ interface TotalOrderReqData {
 
 const ms = useMessage()
 
-const defalutData: TotalVisitReqData = {
-  total_result: { total_visits: '9' },
-  hour_result: [{ hour: 16, count: '4' }, { hour: 17, count: '2' }],
-  month_result: [{ month: 3, count: '1' }, { month: 5, count: '6' }],
-}
+// const defalutData: TotalVisitReqData = {
+// total_result: { total_visits: '9' },
+// hour_result: [{ hour: 16, count: '4' }, { hour: 17, count: '2' }],
+// month_result: [{ month: 3, count: '1' }, { month: 5, count: '6' }],
+// }
 
-const defalutOrderData: TotalOrderReqData = {
-  total_result: { total_order: 100000, total_money: 132 },
-  weak_result: { weak_order: 2008877, weak_money: 345 },
-}
+// const defalutOrderData: TotalOrderReqData = {
+// total_result: { total_order: 100000, total_money: 132 },
+// weak_result: { weak_order: 2008877, weak_money: 345 },
+// }
 
 const totalVisitData = ref<TotalVisitReqData>() // reactive(defalutData)
 const totalOrderData = ref<TotalOrderReqData>()

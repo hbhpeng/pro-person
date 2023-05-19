@@ -14,9 +14,9 @@ const formRef: any = ref(null)
 
 const formParams = reactive({
   name: '',
-  wordNum: '',
+  wordNum: 0,
   originPrice: '',
-  nowPrice: '',
+  nowPrice: 0,
   description: '',
 })
 const rules: FormRules = {
