@@ -102,7 +102,7 @@ requestProductList()
         <NDivider>充值会员</NDivider>
         <NGrid cols="1 s:2 m:3 l:3 xl:3 2xl:3" responsive="screen" x-gap="15" y-gap="15">
           <NGridItem v-for="(item, index) of vipList" :key="index">
-            <NBadge value="推荐">
+            <NBadge :value="item.reserve">
               <NCard hoverable embedded>
                 <div class="title">
                   {{ item?.name }}
@@ -141,7 +141,7 @@ requestProductList()
         </div>
         <NGrid cols="1 s:2 m:3 l:3 xl:3 2xl:3" responsive="screen" x-gap="15" y-gap="15">
           <NGridItem v-for="(item, index) of wordList" :key="index">
-            <NBadge value="荐">
+            <NBadge :value="item.reserve">
               <NCard hoverable embedded>
                 <div class="title">
                   {{ item?.name }}

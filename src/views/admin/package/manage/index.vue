@@ -21,7 +21,7 @@ interface OrderProductInfo {
   originprice: number
   nowprice: number
   description: string
-  reserve?: string
+  reserve: string
   needvip: number
 }
 
@@ -37,6 +37,7 @@ const formParams = reactive({
   nowprice: 0,
   description: '',
   needvip: 0,
+  reserve: '',
 })
 const rules: FormRules = {
   name: {
@@ -66,6 +67,11 @@ const rules: FormRules = {
     required: true,
     trigger: ['blur', 'input'],
     message: '给点描述吧',
+  },
+  reserve: {
+    required: false,
+    trigger: ['blur', 'input'],
+    message: '可以不输入',
   },
 }
 
@@ -154,24 +160,17 @@ function confirmForm(e: { preventDefault: () => void }) {
       return
 
     formBtnLoading.value = true
-    const params = {
-      name: formParams.name,
-      wordnum: formParams.wordnum,
-      originprice: formParams.originprice,
-      nowprice: formParams.nowprice,
-      description: formParams.description,
-      needvip: formParams.needvip,
-    }
     try {
-      const { message: pid } = await reqAddProduct(params)
+      const { message: pid } = await reqAddProduct(formParams)
       const id = parseInt(pid as string)
-      productlist.value.unshift({ ...params, id })
+      productlist.value.unshift({ ...formParams, id })
       formParams.name = ''
       formParams.wordnum = 0
       formParams.originprice = 0
       formParams.nowprice = 0
       formParams.description = ''
       formParams.needvip = 0
+      formParams.reserve = ''
       showModal.value = false
       message.success('添加成功')
     }
@@ -198,21 +197,11 @@ gerProductList()
         新建套餐
       </NButton>
       <NModal v-model:show="showModal" :show-icon="false" preset="dialog" title="新建套餐">
-        <NForm
-          ref="formRef"
-          :model="formParams"
-          :rules="rules"
-          label-placement="left"
-          :label-width="80"
-          class="py-4"
-        >
+        <NForm ref="formRef" :model="formParams" :rules="rules" label-placement="left" :label-width="80" class="py-4">
           <NFormItem label="套餐名称" path="name">
             <NAutoComplete
-              v-model:value="formParams.name"
-              :options="nameOptions"
-              :get-show="nameGetShow"
-              placeholder="套餐名称"
-              @blur="checkNeedVip"
+              v-model:value="formParams.name" :options="nameOptions" :get-show="nameGetShow"
+              placeholder="套餐名称" @blur="checkNeedVip"
             />
           </NFormItem>
           <NFormItem label="字数" path="wordnum">
@@ -244,6 +233,9 @@ gerProductList()
                 此套餐无需开通会员
               </template>
             </NSwitch>
+          </NFormItem>
+          <NFormItem label="推荐" path="reserve">
+            <NInput v-model:value="formParams.reserve" type="text" placeholder="会显示在卡片右上角" />
           </NFormItem>
         </NForm>
 

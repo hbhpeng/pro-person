@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { h } from 'vue'
-import { NButton, NDataTable, useMessage } from 'naive-ui'
+import { NButton, NDataTable } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
-const message = useMessage()
+// const message = useMessage()
 
 interface Song {
   id: number
@@ -18,6 +18,7 @@ interface Song {
   description: string
   needvip: number
   needStr: string
+  reserve: string
 }
 
 interface Props {
@@ -55,6 +56,10 @@ const createColumns = ({
       key: 'needStr',
     },
     {
+      title: '推荐词',
+      key: 'reserve',
+    },
+    {
       title: '描述',
       key: 'description',
     },
@@ -87,10 +92,5 @@ const pagination = false as const
 </script>
 
 <template>
-  <NDataTable
-    :columns="columns"
-    :data="props.proList"
-    :pagination="pagination"
-    :bordered="false"
-  />
+  <NDataTable :columns="columns" :data="props.proList" :pagination="pagination" :bordered="false" />
 </template>
