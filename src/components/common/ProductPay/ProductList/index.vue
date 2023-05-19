@@ -202,6 +202,7 @@ margin-bottom: 10px;
 
 .des-content {
 max-width: 200px;
+white-space: pre-wrap;
 }
 
 .hint-content {

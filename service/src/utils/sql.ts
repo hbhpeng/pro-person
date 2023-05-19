@@ -473,14 +473,15 @@ export async function createAnOrderInfo(username: string,
   openid: string,
   productid: string,
   orderid: string,
+  price: number,
 ) {
-  const sql = 'INSERT INTO GPTUserOrderInfo (username, openid, productid, createtime, orderid) VALUES (?, ?, ?, ?, ?)'
+  const sql = 'INSERT INTO GPTUserOrderInfo (username, openid, productid, createtime, orderid, orderprice) VALUES (?, ?, ?, ?, ?, ?)'
   let connection: PoolConnection
 
   try {
     connection = await pool.getConnection()
     const date = await getTodayDate()
-    await connection.query(sql, [username, openid, productid, date, orderid])
+    await connection.query(sql, [username, openid, productid, date, orderid, price])
   }
   finally {
     connection.release()
