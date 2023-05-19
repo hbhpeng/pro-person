@@ -173,11 +173,11 @@ const moreFunctions = () => {
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
-        <div class="p-1">
+        <!--        <div class="p-1">
           <NButton block @click="moreFunctions">
             更多功能
           </NButton>
-        </div>
+        </div> -->
         <div class="p-1">
           <NButton block @click="show = true">
             {{ $t('store.siderButton') }}
