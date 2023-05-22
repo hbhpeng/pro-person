@@ -134,9 +134,9 @@ const showChongZhi = () => {
   payShow.value = true
 }
 
-const contactServer = () => {
-  window.alert('请联系微信')
-}
+// const contactServer = () => {
+//   window.alert('请联系微信')
+// }
 
 const createOrder = (productid: string) => {
   payId.value = productid
@@ -172,28 +172,28 @@ const userWantVip = () => {
           <NButton dashed block @click="handleAdd">
             {{ $t('chat.newChatButton') }}
           </NButton>
-          <!--          <NButton v-if="canAddFileChat" dashed block style="margin-top: 5px;" @click="handleAddFileQA">
+          <NButton v-if="canAddFileChat" dashed block style="margin-top: 5px;" @click="handleAddFileQA">
             +新建文件解答
-          </NButton> -->
+          </NButton>
         </div>
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
-        <!--        <div class="p-1">
+        <div class="p-1">
           <NButton block @click="moreFunctions">
             更多功能
           </NButton>
-        </div> -->
+        </div>
         <!--        <div class="p-1">
           <NButton block @click="show = true">
             {{ $t('store.siderButton') }}
           </NButton>
-        </div>
+        </div> -->
         <div class="p-1">
           <NButton block @click="aiPPTShow = true">
             AI制作ppt
           </NButton>
-        </div> -->
+        </div>
         <div class="p-1">
           <NButton block @click="contactServer">
             联系客服
