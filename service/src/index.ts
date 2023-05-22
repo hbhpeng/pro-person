@@ -65,7 +65,7 @@ app.all('*', (_, res, next) => {
 function checkUserIsOutDate(endday: any) {
   if (!endday)
     return true
-  return moment(endday).unix() <= Date.now()
+  return moment(endday).valueOf() <= Date.now()
 }
 
 async function chatCheck(req, res, prompt, extraPrice = 0) {

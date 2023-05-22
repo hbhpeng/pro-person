@@ -19,6 +19,7 @@ interface Song {
   needvip: number
   needStr: string
   reserve: string
+  porder: number
 }
 
 interface Props {
@@ -50,6 +51,10 @@ const createColumns = ({
     {
       title: '现价',
       key: 'nowprice',
+    },
+    {
+      title: '排序',
+      key: 'porder',
     },
     {
       title: '需要会员',

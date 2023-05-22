@@ -47,6 +47,7 @@ export interface OrderProductInfo {
   description: string
   reserve: string
   needvip: number
+  porder: number
 }
 
 interface AdminInfo {
@@ -534,7 +535,7 @@ export async function updateUserOrderInfoByOrderId(username: string, openid: str
         // 判断是不是会员产品
         // 构造sql 执行更新
         let updateSql: string
-        let interval
+        let interval = '-1'
         if (productInfo.name === supportVipOption[0]) {
           interval = '7 DAY'
           updateSql = 'UPDATE GPTUserInfo SET vipendday=IF(COALESCE(vipendday, \'1970-01-01\') < CURRENT_DATE(), DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), DATE_ADD(vipendday, INTERVAL 7 DAY)), usagecount=usagecount+? WHERE openid=?'
@@ -556,7 +557,7 @@ export async function updateUserOrderInfoByOrderId(username: string, openid: str
           await connection.query(updateSql, [productInfo.wordnum, openid])
         }
         else {
-          updateSql = 'update GPTUserInfo set usagecount = usagecount + ?, isVip = ? where openid=?'
+          updateSql = 'update GPTUserInfo set usagecount=usagecount+?, isVip=? where openid=?'
           await connection.query(updateSql, [productInfo.wordnum, productInfo.needvip, openid])
         }
       }
@@ -601,16 +602,15 @@ export async function addAProductInfo(product: OrderProductInfo) {
     let sql: string
     if (!product.id || product.id < 0) {
       // 插入
-      sql = `INSERT INTO GPTProductInfo (name, wordnum, originprice, nowprice, description, reserve, needvip)
-VALUES (?, ?, ?, ?, ?, ?, ?)`
+      sql = 'INSERT INTO GPTProductInfo (name, wordnum, originprice, nowprice, description, reserve, needvip, porder) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       params = [product.name, product.wordnum, product.originprice, product.nowprice,
-        product.description, product.reserve, product.needvip]
+        product.description, product.reserve, product.needvip, product.porder]
     }
     else {
       // 更新
-      sql = `UPDATE GPTProductInfo SET name=?, wordnum=?, originprice=?, nowprice=?,
+      sql = `UPDATE GPTProductInfo SET porder=?, name=?, wordnum=?, originprice=?, nowprice=?,
 description=?, reserve=?, needvip=? WHERE id=?`
-      params = [product.name, product.wordnum, product.originprice, product.nowprice,
+      params = [product.porder, product.name, product.wordnum, product.originprice, product.nowprice,
         product.description, product.reserve, product.needvip, product.id]
     }
     const [result] = await connection.query(sql, params) as any[]

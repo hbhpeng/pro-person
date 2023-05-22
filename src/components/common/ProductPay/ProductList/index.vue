@@ -29,6 +29,7 @@ interface OrderProductInfo {
   description: string
   reserve: string
   needvip: number
+  porder: number
 }
 
 const emits = defineEmits < Emit > ()
@@ -50,10 +51,14 @@ watch(
     vipList.value = productList.value?.filter((value) => {
       return (value.name === '周会员') || (value.name === '月会员')
 || (value.name === '季会员') || (value.name === '年会员')
+    }).sort((item1, item2) => {
+      return item1.porder - item2.porder
     })
     wordList.value = productList.value?.filter((value) => {
       return !((value.name === '周会员') || (value.name === '月会员')
 || (value.name === '季会员') || (value.name === '年会员'))
+    }).sort((item1, item2) => {
+      return item1.porder - item2.porder
     })
   }, {
     deep: true,

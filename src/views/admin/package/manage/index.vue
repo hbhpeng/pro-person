@@ -23,6 +23,7 @@ interface OrderProductInfo {
   description: string
   reserve: string
   needvip: number
+  porder: number
 }
 
 const showModal = ref(false)
@@ -38,6 +39,7 @@ const formParams = reactive({
   description: '',
   needvip: 0,
   reserve: '',
+  porder: 0,
 })
 const rules: FormRules = {
   name: {
@@ -73,6 +75,12 @@ const rules: FormRules = {
     trigger: ['blur', 'input'],
     message: '可以不输入',
   },
+  porder: {
+    type: 'number',
+    required: false,
+    trigger: ['blur', 'input'],
+    message: '可以不输入',
+  },
 }
 
 interface VipOption {
@@ -84,6 +92,8 @@ const productlist = ref<OrderProductInfo[]>([])
 const productlistShow = computed(() => {
   return productlist.value.map((item) => {
     return { ...item, needStr: item.needvip > 0 ? '需要' : '不需要' }
+  }).sort((item1, item2) => {
+    return item1.porder - item2.porder
   })
 })
 
@@ -171,6 +181,7 @@ function confirmForm(e: { preventDefault: () => void }) {
       formParams.description = ''
       formParams.needvip = 0
       formParams.reserve = ''
+      formParams.porder = 0
       showModal.value = false
       message.success('添加成功')
     }
@@ -220,6 +231,9 @@ gerProductList()
                 元
               </template>
             </NInputNumber>
+          </NFormItem>
+          <NFormItem label="排序" path="porder" type="number">
+            <NInputNumber v-model:value="formParams.porder" placeholder="越低越靠前" style="width: 100%;" />
           </NFormItem>
           <NFormItem label="描述" path="description">
             <NInput v-model:value="formParams.description" type="textarea" placeholder="描述" />

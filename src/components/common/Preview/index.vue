@@ -58,8 +58,8 @@ width: 100%;
 .download {
 border-radius: 5px;
 width: 100px;
-height: 30px;
-color: black;
+height: 40px;
+color: white;
 background-color: #6AA1E7;
 }
 #content {
