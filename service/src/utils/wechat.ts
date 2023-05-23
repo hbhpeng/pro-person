@@ -4,11 +4,14 @@ import axios from 'axios'
 import tenpay from 'tenpay'
 import xml2js from 'xml2js'
 
+const forceCData = '<FORCECDATA>'
+
 export const APPTOKEN = 'jhyuanyouyuankeji'
 export const MCHID = '1644083736'
 const partnerV2Key = '31ae470b212fde09afc98G41ccb7ef7z'
 export const APPID = 'wxd7c431bcd85e0e80'
 const APPSECRET = 'e0f5b8f87771b269b523c618d21bebe8'
+let createAccountMenu = false
 let queryTime = 0
 let failTryCount = 0
 
@@ -31,6 +34,29 @@ const http = axios.create({
   baseURL: 'https://api.weixin.qq.com/cgi-bin',
 })
 
+export const createWechatOfficialAccountMenu = async () => {
+  if (createAccountMenu)
+    return
+  const url = `/menu/create?access_token=${process.env.wechatToken}`
+  const data = {
+    button: [
+      {
+        type: 'view',
+        name: 'chatgpt',
+        key: 'menu_chatgpt_click',
+        url: 'http://usa1y.studentgpt.top/',
+      },
+    ],
+  }
+  const config = {
+    headers: { 'Content-Type': 'application/json' },
+  }
+  const response = await http.post(url, data, config)
+  // console.log(response)
+  if (response.data.errcode === 0)
+    createAccountMenu = true
+}
+
 const getWeChatAccessToken = async () => {
   // 使用axios发起GET请求获取access_token
   const token = await http.get(`/token?grant_type=client_credential&appid=${APPID}&secret=${APPSECRET}`)
@@ -44,6 +70,8 @@ const getWeChatAccessToken = async () => {
       return response.data.access_token
     })
   process.env.wechatToken = token
+
+  await createWechatOfficialAccountMenu()
   // console.log(process.env.wechatToken)
 }
 
@@ -113,4 +141,24 @@ export const getWechatPayParam = (prepay_id: string) => {
   // const signature = signer.sign(privateKey, 'base64')
   // return { appId, timeStamp, nonceStr, packageStr, signType, signature }
   return payApi.getPayParamsByPrepay({ prepay_id })
+}
+
+export const replySubscribeData = (from: string, to: string) => {
+  const opt = { xmldec: null, rootName: 'xml', allowSurrogateChars: true, cdata: true }
+  const reply = new xml2js.Builder(opt).buildObject({ FromUserName: from + forceCData, ToUserName: to + forceCData, CreateTime: Date.now(), MsgType: `text${forceCData}`, Content: `你好${forceCData}` })
+  const finalReply = reply.replace(new RegExp(forceCData, 'g'), '')
+  return finalReply
+}
+
+export const replyUserSendMessageData = (xmlData: any) => {
+  const opt = { xmldec: null, rootName: 'xml', allowSurrogateChars: true, cdata: true }
+  const reply = new xml2js.Builder(opt).buildObject({
+    FromUserName: xmlData.tousername[0] + forceCData,
+    ToUserName: xmlData.fromusername[0] + forceCData,
+    CreateTime: Date.now(),
+    MsgType: `text${forceCData}`,
+    Content: `点击。。。${forceCData}`,
+  })
+  const finalReply = reply.replace(new RegExp(forceCData, 'g'), '')
+  return finalReply
 }

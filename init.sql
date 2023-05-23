@@ -36,7 +36,7 @@ CREATE TABLE `GPTAdmin` (
 -- Records of GPTAdmin
 -- ----------------------------
 BEGIN;
-INSERT INTO `GPTAdmin` VALUES (1, 'jiaqi', 'jiaqi1017');
+INSERT INTO `GPTAdmin` VALUES (1, 'jiaqi', 'jiaqi1017', NULL, NULL);
 COMMIT;
 
 -- ----------------------------

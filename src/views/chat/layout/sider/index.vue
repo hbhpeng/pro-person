@@ -31,7 +31,7 @@ import {
   PromptStore,
   UserInfo,
 } from '@/components/common'
-// import { router } from '@/router'
+import { router } from '@/router'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
@@ -134,9 +134,9 @@ const showChongZhi = () => {
   payShow.value = true
 }
 
-// const contactServer = () => {
-//   window.alert('请联系微信')
-// }
+const contactServer = () => {
+  window.alert('请联系微信chatgptstu')
+}
 
 const createOrder = (productid: string) => {
   payId.value = productid
@@ -155,9 +155,9 @@ const userWantVip = () => {
   payShow.value = true
 }
 
-// const moreFunctions = () => {
-// router.push({ name: 'morev' })
-// }
+const moreFunctions = () => {
+  router.push({ name: 'morev' })
+}
 </script>
 
 <template>

@@ -45,7 +45,7 @@ import * as wechatApi from './utils/wechat'
 // console.log(await queryFileQuestion('hbhpeng', '变量是什么'))
 
 wechatApi.startQueryAccessToken()
-// process.env.wechatToken = '68_d6lrtZfzsaY456DmvsT0NbMEjKd35iTIafeLh6-8spXToWvJcE4sedS0mJLiZ4C5mSm5lFFphetVB5WeoTvWmDdZ8xyr9yr3s0GNeG-0ltQlPW5-Xz6VjfV3o_EOZUeACAALG'
+// process.env.wechatToken = '68_xF9DPvXJa0Oj6w1Nq4EWNdO6X4M8QfO0AEEoKvzs_nuCIuE7GtZXOHJO5pKk2m4xhdYY_Qn-iio8Cbg1ZUlI9URIjLMOVJhO5oS0s4EQHeana021WEGt1IST_wMTTXaAEAYYC'
 
 const app = express()
 export const router = express.Router()
@@ -631,6 +631,7 @@ router.post('/wx', async (req, res) => {
   try {
     const xmlData = req.body.xml
     // console.log(xmlData)
+    res.header('Content-Type', 'application/xml; charset=utf-8')
     if (xmlData.msgtype.includes('event')) {
       switch (xmlData.event[0]) {
         case 'subscribe': {
@@ -646,6 +647,9 @@ router.post('/wx', async (req, res) => {
             const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0], existUsername)
             redisCache.loginedWithSessionId(result, username)
           }
+          // 发送欢迎消息
+          const welcome = wechatApi.replySubscribeData(xmlData.tousername[0], xmlData.fromusername[0])
+          res.write(welcome)
           break
         }
         case 'SCAN': {
@@ -660,6 +664,10 @@ router.post('/wx', async (req, res) => {
           break
         }
       }
+    }
+    else if (xmlData.msgtype.includes('text')) {
+      const reply = wechatApi.replyUserSendMessageData(xmlData)
+      res.write(reply)
     }
   }
   catch (error) {
