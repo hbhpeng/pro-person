@@ -24,6 +24,7 @@ export interface UserInfo {
   openid?: string
   isVip: number
   vipendday?: string
+  reverse?: string
 }
 
 export interface UserOrderInfo {
@@ -48,12 +49,22 @@ export interface OrderProductInfo {
   reserve: string
   needvip: number
   porder: number
+  salerid?: string
 }
 
 interface AdminInfo {
   userid: number
   username: string
   password: string
+}
+
+interface SalerInfo {
+  id: number
+  nameid: string
+  salekey: string
+  nickname: string
+  lastlevel: string
+  baseurl: string
 }
 
 export enum OrderStatus {
@@ -101,6 +112,15 @@ async function writeCacheToDatabase(cache: VisitCache) {
   finally {
     connection.release()
   }
+}
+
+export function getFenXiaoWithSessionId(sessionId: string) {
+  const result = sessionId.split('_')
+  if (result.length > 0) {
+    if (result[0].length < 6)
+      return result[0]
+  }
+  return ''
 }
 
 export async function getTotalVisits() {
@@ -156,6 +176,13 @@ function randomString(length) {
   return result
 }
 
+function createUserNameWithOpenId(openid: string) {
+  if (openid.length > 16)
+    return openid.substring(0, 8) + openid.slice(-8)
+
+  return openid
+}
+
 // 格式化日期
 function formatDate(date) {
   const year = date.getFullYear()
@@ -205,6 +232,19 @@ export async function addOrUpdateUserInfo(userinfo: UserInfo) {
     // console.error(`Error querying database: ${error.stack}`)
     // throw error
     return { status: 'fail', error }
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function updateUserBenefit(username: string, usagecount: number, vipendday: string, isVip: number) {
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const sql = 'update GPTUserInfo set usagecount=?, vipendday=?, isVip=? where username=?'
+    // 更新
+    await connection.execute(sql, [usagecount, vipendday, isVip, username])
   }
   finally {
     connection.release()
@@ -384,12 +424,18 @@ export async function verifyUser(username: string, password: string) {
   }
 }
 
-export async function userScanLoginWithOpenId(openId: string, username?: string) {
+export async function userScanLoginWithOpenId(openId: string, username?: string, fenxiao?: string) {
+  const originOid = openId
   let querySql: string
-  if (username)
+  if (username) {
     querySql = `SELECT * FROM GPTUserInfo where username = '${username}'`
-  else
+  }
+  else {
+    if (fenxiao)
+      openId = `${fenxiao}_${openId}`
+
     querySql = `SELECT * FROM GPTUserInfo where openid = '${openId}'`
+  }
   let connection: PoolConnection
   try {
     if (!openId)
@@ -403,10 +449,16 @@ export async function userScanLoginWithOpenId(openId: string, username?: string)
       // 生成随机用户名和密码
       const usernamePrefix = 'user_'
       const passwordLength = 9
-      const username = `${usernamePrefix + randomString(10)}_${formatDate(new Date())}`
+      const username = `${usernamePrefix + createUserNameWithOpenId(originOid)}_${formatDate(new Date())}`
       const password = randomString(passwordLength)
-      const insertSql = 'INSERT INTO GPTUserInfo (username, password, openid, lastlogin, createtime) VALUES (?, ?, ?, ?, ?)'
-      await connection.query(insertSql, [username, password, openId, date, date])
+      if (!fenxiao) {
+        const insertSql = 'INSERT INTO GPTUserInfo (username, password, openid, lastlogin, createtime) VALUES (?, ?, ?, ?, ?)'
+        await connection.query(insertSql, [username, password, openId, date, date])
+      }
+      else {
+        const insertSql = 'INSERT INTO GPTUserInfo (username, password, openid, lastlogin, createtime, reverse) VALUES (?, ?, ?, ?, ?, ?)'
+        await connection.query(insertSql, [username, password, openId, date, date, fenxiao])
+      }
       return { username }
     }
     else if (user.openid !== openId && username) {
@@ -449,6 +501,31 @@ export async function getUserInfo(username: string) {
   }
 }
 
+export async function getUserInfoWithOpenid(openid: string, fenxiao: string) {
+  if (fenxiao)
+    openid = `${fenxiao}_${openid}`
+
+  const sql = 'SELECT * FROM GPTUserInfo where openid = ?'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [results] = await connection.query(sql, [openid])
+    const [user] = results as UserInfo[]
+    if (user)
+      return user as UserInfo
+
+    return null
+  }
+  catch (error) {
+    // console.error(`Error querying database: ${error.stack}`)
+    // throw error
+    return null
+  }
+  finally {
+    connection.release()
+  }
+}
+
 export async function registerUser(username: string, password: string) {
   const sql = 'INSERT INTO GPTUserInfo (username, password) VALUES (?, ?)'
   let connection: PoolConnection
@@ -475,7 +552,11 @@ export async function createAnOrderInfo(username: string,
   productid: string,
   orderid: string,
   price: number,
+  fenxiao: string,
 ) {
+  if (fenxiao)
+    openid = `${fenxiao}_${openid}`
+
   const sql = 'INSERT INTO GPTUserOrderInfo (username, openid, productid, createtime, orderid, orderprice) VALUES (?, ?, ?, ?, ?, ?)'
   let connection: PoolConnection
 
@@ -490,10 +571,14 @@ export async function createAnOrderInfo(username: string,
 }
 // orderid 必填  username和openid选填一个
 export async function getUserOrderInfoByOrderid(orderid: string, openid: string, username: string) {
+  const fenxiao = getFenXiaoWithSessionId(orderid)
   let queryId = username
   let querySql = 'SELECT * FROM GPTUserOrderInfo where username = ? and orderid = ?'
   if (openid) {
     querySql = 'SELECT * FROM GPTUserOrderInfo where openid = ? and orderid = ?'
+    if (fenxiao)
+      openid = `${fenxiao}_${openid}`
+
     queryId = openid
   }
   let connection: PoolConnection
@@ -514,6 +599,11 @@ export async function getUserOrderInfoByOrderid(orderid: string, openid: string,
 }
 
 export async function updateUserOrderInfoByOrderId(username: string, openid: string, orderid: string, orderstate: OrderStatus) {
+  const originOid = openid
+  const fenxiao = getFenXiaoWithSessionId(orderid)
+  if (fenxiao)
+    openid = `${fenxiao}_${openid}`
+
   let queryId = openid
   let updateSql = 'update GPTUserOrderInfo set orderstate=? where openid=? and orderid=?'
   if (username) {
@@ -524,7 +614,7 @@ export async function updateUserOrderInfoByOrderId(username: string, openid: str
   let connection: PoolConnection
   try {
     connection = await pool.getConnection()
-    const orderinfo = await getUserOrderInfoByOrderid(orderid, openid, '')
+    const orderinfo = await getUserOrderInfoByOrderid(orderid, originOid, '')
 
     if (orderinfo.orderstate !== orderstate) {
       // 更新订单表
@@ -571,13 +661,16 @@ export async function updateUserOrderInfoByOrderId(username: string, openid: str
   }
 }
 
-export async function deleteAllUserOrderUncomplete(openid: string, username: string) {
+export async function deleteAllUserOrderUncomplete(openid: string, username: string, fenxiao: string) {
   if (!username && !openid)
     return
   let queryId = username
   let deletesql = 'DELETE FROM GPTUserOrderInfo WHERE orderstate != 1 AND username = ?'
   if (openid) {
     deletesql = 'DELETE FROM GPTUserOrderInfo WHERE orderstate != 1 AND openid = ?'
+    if (fenxiao)
+      openid = `${fenxiao}_${openid}`
+
     queryId = openid
   }
   let connection: PoolConnection
@@ -595,6 +688,9 @@ export async function deleteAllUserOrderUncomplete(openid: string, username: str
 
 // 产品相关
 export async function addAProductInfo(product: OrderProductInfo) {
+  if (!product.salerid)
+    product.salerid = '1'
+
   let connection: PoolConnection
   let params: any[]
   try {
@@ -602,9 +698,9 @@ export async function addAProductInfo(product: OrderProductInfo) {
     let sql: string
     if (!product.id || product.id < 0) {
       // 插入
-      sql = 'INSERT INTO GPTProductInfo (name, wordnum, originprice, nowprice, description, reserve, needvip, porder) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      sql = 'INSERT INTO GPTProductInfo (name, wordnum, originprice, nowprice, description, reserve, needvip, porder, salerid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
       params = [product.name, product.wordnum, product.originprice, product.nowprice,
-        product.description, product.reserve, product.needvip, product.porder]
+        product.description, product.reserve, product.needvip, product.porder, product.salerid]
     }
     else {
       // 更新
@@ -633,12 +729,15 @@ export async function removeAProductInfo(productid: number) {
   }
 }
 
-export async function queryAllProductInfo() {
+export async function queryAllProductInfo(salerid: string) {
   let connection: PoolConnection
   try {
     connection = await pool.getConnection()
-    const sql = 'SELECT * FROM GPTProductInfo'
-    const [results] = await connection.query(sql)
+    if (!salerid)
+      salerid = '1'
+
+    const sql = 'SELECT * FROM GPTProductInfo WHERE salerid=?'
+    const [results] = await connection.query(sql, [salerid])
     const resultData = results as OrderProductInfo[]
     return resultData
   }
@@ -658,6 +757,24 @@ export async function getProductInfoByProductId(productid: number) {
     const [productInfo] = results as OrderProductInfo[]
     if (productInfo)
       return productInfo as OrderProductInfo
+    return null
+  }
+  finally {
+    connection.release()
+  }
+}
+
+// 分销相关
+export async function getSalerInfoByNameId(nameid: string) {
+  const querySql = 'SELECT * FROM GPTSaler where nameid = ?'
+
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [results] = await connection.query(querySql, [nameid])
+    const [salerInfo] = results as SalerInfo[]
+    if (salerInfo)
+      return salerInfo
     return null
   }
   finally {

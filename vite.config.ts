@@ -49,6 +49,12 @@ export default defineConfig((env) => {
       commonjsOptions: {
         ignoreTryCatch: false,
       },
+      rollupOptions: {
+        input: {
+          main: 'index.html',
+          wxverify: `${path.resolve(process.cwd(), 'public')}/MP_verify_WLYZmscmKA7kiH3r.txt`,
+        },
+      },
     },
   }
 })

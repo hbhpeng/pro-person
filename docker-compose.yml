@@ -8,6 +8,9 @@ services:
     environment:
       # 二选一
       OPENAI_API_KEY: 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
+			# 分销模式
+			YUAN_YUAN_IS_FENXIAO: 1
+			YUAN_YUAN_FENXIAO_ID: 1234
       # 二选一
       OPENAI_ADMAIN_TOKEN: jiaqi1017
       EXPIRE_DATE_TIME: ‘2023-09-01’

@@ -36,6 +36,7 @@ import { askToGenerateChart, clearUserFileCache, m_upload, queryFileQuestion } f
 import type { FileReadStatus } from './utils/fileqa'
 import * as redisCache from './utils/redisCache'
 import * as wechatApi from './utils/wechat'
+import * as proxyMiddleware from './utils/proxy'
 
 // queryFileQuestion('hbhpeng', '变量是什么').then((result) => {
 
@@ -43,8 +44,11 @@ import * as wechatApi from './utils/wechat'
 
 // })
 // console.log(await queryFileQuestion('hbhpeng', '变量是什么'))
-
-wechatApi.startQueryAccessToken()
+let shouldProxyRequest = true
+if (!process.env.YUAN_YUAN_IS_FENXIAO) {
+  wechatApi.startQueryAccessToken()
+  shouldProxyRequest = false
+}
 // process.env.wechatToken = '68_xF9DPvXJa0Oj6w1Nq4EWNdO6X4M8QfO0AEEoKvzs_nuCIuE7GtZXOHJO5pKk2m4xhdYY_Qn-iio8Cbg1ZUlI9URIjLMOVJhO5oS0s4EQHeana021WEGt1IST_wMTTXaAEAYYC'
 
 const app = express()
@@ -197,6 +201,12 @@ router.post('/verify', async (req, res) => {
 // 产品相关
 router.post('/product/add', async (req, res) => {
   try {
+    if (shouldProxyRequest) {
+      req.body.salerid = process.env.YUAN_YUAN_FENXIAO_ID
+      await proxyMiddleware.proxyRequestMethod('post', '/product/add', req, res)
+      return
+    }
+
     if (!sqlAuth(req, res))
       return
 
@@ -213,7 +223,14 @@ router.post('/product/add', async (req, res) => {
 
 router.post('/product/query', async (req, res) => {
   try {
-    const productInfos: SqlOperate.OrderProductInfo[] = await SqlOperate.queryAllProductInfo()
+    if (shouldProxyRequest) {
+      req.body.salerid = process.env.YUAN_YUAN_FENXIAO_ID
+      await proxyMiddleware.proxyRequestMethod('post', '/product/query', req, res)
+      return
+    }
+
+    const salerid = req.body.salerid as string
+    const productInfos: SqlOperate.OrderProductInfo[] = await SqlOperate.queryAllProductInfo(salerid)
     res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(productInfos) })
   }
   catch (error) {
@@ -433,6 +450,14 @@ router.post('/user/getuserinfo', async (req, res) => {
       res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
       return
     }
+
+    // 尝试同步主厂商的用户权益
+    if (shouldProxyRequest) {
+      const userInfo = await proxyMiddleware.requestTopLevelUserToSync(req.headers.usertoken) as UserInfo
+      const endday = redisCache.turnDayTimeToNoraml(userInfo.vipendday)
+      await SqlOperate.updateUserBenefit(userInfo.username, userInfo.usagecount, endday, userInfo.isVip)
+    }
+
     const userinfo = await getUserInfo(username)
     if (userinfo)
       res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(userinfo) })
@@ -598,6 +623,9 @@ router.post('/generate-chart', async (req, res) => {
 // 微信模块
 router.get('/wx', (req, res) => {
   try {
+    if (shouldProxyRequest)
+      return
+
     const signature = req.query.signature
     const timestamp = req.query.timestamp
     const nonce = req.query.nonce
@@ -644,8 +672,24 @@ router.post('/wx', async (req, res) => {
             if (cacheInfo && cacheInfo.username)
               existUsername = cacheInfo.username
 
-            const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0], existUsername)
+            // 尝试拿分销信息
+            let fenxiao = ''
+            if (!shouldProxyRequest) {
+              // 主系统才拿分销信息
+              fenxiao = redisCache.getFenXiaoWithSessionId(result)
+            }
+
+            const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0], existUsername, fenxiao)
             redisCache.loginedWithSessionId(result, username)
+
+            if (fenxiao) {
+              // 拿到了分销信息 看看合法吗
+              const salerInfo = await SqlOperate.getSalerInfoByNameId(fenxiao)
+              if (salerInfo && salerInfo.baseurl) {
+                // 分销信息 给分销系统发送信息
+                await proxyMiddleware.forwardRequestMethod(`${salerInfo.baseurl}/wx`, 'post', req, res)
+              }
+            }
           }
           // 发送欢迎消息
           const welcome = wechatApi.replySubscribeData(xmlData.tousername[0], xmlData.fromusername[0])
@@ -659,8 +703,25 @@ router.post('/wx', async (req, res) => {
           let existUsername = ''
           if (cacheInfo && cacheInfo.username)
             existUsername = cacheInfo.username
-          const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0], existUsername)
+
+          // 尝试拿分销信息
+          let fenxiao = ''
+          if (!shouldProxyRequest) {
+            // 主系统才拿分销信息
+            fenxiao = redisCache.getFenXiaoWithSessionId(result)
+          }
+
+          const { username } = await userScanLoginWithOpenId(xmlData.fromusername[0], existUsername, fenxiao)
           redisCache.loginedWithSessionId(result, username)
+
+          if (fenxiao) {
+            // 拿到了分销信息 看看合法吗
+            const salerInfo = await SqlOperate.getSalerInfoByNameId(fenxiao)
+            if (salerInfo && salerInfo.baseurl) {
+              // 分销信息 转发请求
+              await proxyMiddleware.forwardRequestMethod(`${salerInfo.baseurl}/wx`, 'post', req, res)
+            }
+          }
           break
         }
       }
@@ -684,6 +745,12 @@ router.get('/user/loginwximage', async (req, res) => {
   try {
     const username = userSqlAuth(req, res)
     if (sessionid && redisCache.loginCheckSessionId(sessionid, username)) {
+      // 要先设置sessionid 分销系统再转发请求
+      if (shouldProxyRequest) {
+        await proxyMiddleware.proxyRequestMethod('get', '/user/loginwximage', req, res)
+        return
+      }
+
       const url = await wechatApi.getWechatOfficialQrcode(sessionid)
       if (url)
         res.send({ status: 'Success', message: url, data: JSON.stringify({ url }) })
@@ -759,6 +826,14 @@ router.post('/wxpay/notify', async (req, res) => {
       const openid = xmldata.openid[0]
       const out_trade_no = xmldata.out_trade_no[0]
       await SqlOperate.updateUserOrderInfoByOrderId('', openid, out_trade_no, SqlOperate.OrderStatus.Paid)
+      const fenxiao = SqlOperate.getFenXiaoWithSessionId(out_trade_no)
+      if (fenxiao) {
+        // 把字数 vip状态 时间都跟分销商同步一下
+        const userInfo = await SqlOperate.getUserInfoWithOpenid(openid, fenxiao)
+        const salerInfo = await SqlOperate.getSalerInfoByNameId(fenxiao)
+        if (userInfo && salerInfo)
+          proxyMiddleware.syncSalerUserInfo(userInfo, salerInfo)
+      }
     }
     else {
       // 删除订单? 支付中？支付失败？
@@ -772,11 +847,17 @@ router.post('/wxpay/notify', async (req, res) => {
 // 支付的两种方法
 router.post('/user/payurl', async (req, res) => {
   // const { question } = req.body as { question: string }
-
   try {
     const username = userSqlAuth(req, res)
     if (!username) {
       res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
+      return
+    }
+
+    if (shouldProxyRequest) {
+      // 分销转发
+      req.body.salerid = process.env.YUAN_YUAN_FENXIAO_ID
+      await proxyMiddleware.proxyRequestMethod('post', '/user/payurl', req, res)
       return
     }
 
@@ -789,10 +870,14 @@ router.post('/user/payurl', async (req, res) => {
       if (checkUserIsOutDate(user.vipendday))
         throw new Error('您现在还不是会员哦')
     }
-    const orderId = uuidv4().slice(0, 8) + uuidv4().slice(-8)
-    const openid = user.openid
-    await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
-    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId, productInfo.nowprice)
+    let orderId = ''
+    if (req.body.salerid)
+      orderId = `${req.body.salerid}_`
+
+    orderId += uuidv4().slice(0, 8) + uuidv4().slice(-8)
+    const openid = redisCache.turnOpenidToNormal(user.openid)
+    await SqlOperate.deleteAllUserOrderUncomplete(openid, username, req.body.salerid)
+    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId, productInfo.nowprice, req.body.salerid)
     const orderPrice = Math.floor(productInfo.nowprice * 100)
     const { prepay_id, code_url } = await wechatApi.payApi.unifiedOrder({
       out_trade_no: orderId,
@@ -818,6 +903,13 @@ router.post('/user/payurl', async (req, res) => {
 
 router.post('/user/get_pay_params', async (req, res) => {
   try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      req.body.salerid = process.env.YUAN_YUAN_FENXIAO_ID
+      await proxyMiddleware.proxyRequestMethod('post', '/user/get_pay_params', req, res)
+      return
+    }
+
     const username = userSqlAuth(req, res)
     if (!username) {
       res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
@@ -833,8 +925,12 @@ router.post('/user/get_pay_params', async (req, res) => {
       if (checkUserIsOutDate(user.vipendday))
         throw new Error('您现在还不是会员哦')
     }
-    const orderId = uuidv4().slice(0, 8) + uuidv4().slice(-8)
-    const openid = user.openid
+    let orderId = ''
+    if (req.body.salerid)
+      orderId = `${req.body.salerid}_`
+
+    orderId += uuidv4().slice(0, 8) + uuidv4().slice(-8)
+    const openid = redisCache.turnOpenidToNormal(user.openid)
     const orderPrice = Math.floor(productInfo.nowprice * 100)
     const result = await wechatApi.payApi.unifiedOrder({
       out_trade_no: orderId,
@@ -846,8 +942,8 @@ router.post('/user/get_pay_params', async (req, res) => {
     if (result.result_code !== 'SUCCESS')
       throw new Error('预支付交易错误')
 
-    await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
-    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId, productInfo.nowprice)
+    await SqlOperate.deleteAllUserOrderUncomplete(openid, username, req.body.salerid)
+    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId, productInfo.nowprice, req.body.salerid)
 
     const prepay_id = result.prepay_id
     const paramData = wechatApi.getWechatPayParam(prepay_id)
@@ -863,6 +959,11 @@ router.post('/user/get_pay_params', async (req, res) => {
 
 router.post('/user/checkpay', async (req, res) => {
   try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      await proxyMiddleware.proxyRequestMethod('post', '/user/checkpay', req, res)
+      return
+    }
     const username = userSqlAuth(req, res)
     if (!username) {
       res.send({ status: 'Fail', message: '请重新登录', data: JSON.stringify({ status: '3' }) })
@@ -878,6 +979,14 @@ router.post('/user/checkpay', async (req, res) => {
       if (result.return_code === 'SUCCESS') {
         if (result.trade_state === 'SUCCESS') {
           await SqlOperate.updateUserOrderInfoByOrderId(username, '', orderid, SqlOperate.OrderStatus.Paid)
+          // 尝试把字数 vip状态跟分销商同步
+          const fenxiao = SqlOperate.getFenXiaoWithSessionId(orderid)
+          if (fenxiao) {
+            const userInfo = await SqlOperate.getUserInfo(username)
+            const salerInfo = await SqlOperate.getSalerInfoByNameId(fenxiao)
+            if (userInfo && salerInfo)
+              proxyMiddleware.syncSalerUserInfo(userInfo, salerInfo)
+          }
           res.send({ status: 'Success', message: '成功', data: '' })
         }
         else {
@@ -888,6 +997,22 @@ router.post('/user/checkpay', async (req, res) => {
         throw new Error('查询订单失败，请稍后重试')
       }
     }
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+// 分销商同步接口
+router.post('/saler/syncuser', async (req, res) => {
+  try {
+    const { ...userInfo } = req.body as UserInfo
+    const endday = redisCache.turnDayTimeToNoraml(userInfo.vipendday)
+    await SqlOperate.updateUserBenefit(userInfo.username, userInfo.usagecount, endday, userInfo.isVip)
+    res.send({ status: 'Success', message: '同步成功', data: '' })
   }
   catch (error) {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))

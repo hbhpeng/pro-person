@@ -1,4 +1,5 @@
 import { createHash } from 'crypto'
+import moment from 'moment'
 import QuickLRU from 'quick-lru'
 
 const qaCache = new QuickLRU({ maxSize: 30000, maxAge: 60 * 60 * 24 * 1000 })
@@ -16,7 +17,11 @@ function generateSessionId(length = 16): string {
   const hash = createHash('sha256')
   hash.update(sessionId)
 
-  return hash.digest('hex')
+  const str = `${process.env.YUAN_YUAN_FENXIAO_ID}_${hash.digest('hex')}`
+  if (str.length > 60)
+    return str.substring(0, 58)
+
+  return str
 }
 
 export function createAndCacheSessionId() {
@@ -56,4 +61,34 @@ export function getValueWithSessionId(sessionId: string) {
     return {}
 
   return qaCache.get(sessionId)
+}
+
+export function getFenXiaoWithSessionId(sessionId: string) {
+  const result = sessionId.split('_')
+  if (result.length > 0) {
+    if (result[0].length < 6)
+      return result[0]
+  }
+  return ''
+}
+
+export function turnOpenidToNormal(openid: string) {
+  const index = openid.indexOf('_')
+  if (index !== -1) {
+    const result = openid.substring(0, index)
+    if (result.length < 6)
+      return openid.substring(index + 1)
+  }
+  return openid
+}
+
+export function turnDayTimeToNoraml(vipendday: string) {
+  let day = vipendday
+  if (day)
+    day = moment(vipendday).format('YYYY-MM-DD HH:mm:ss')
+
+  else
+    day = ''
+
+  return day
 }
