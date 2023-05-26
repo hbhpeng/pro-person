@@ -10,5 +10,6 @@ import Preview from './Preview/index.vue'
 import MakePPT from './MakePPT/index.vue'
 import ProductPay from './ProductPay/index.vue'
 import OrderQrcode from './ProductPay/OrderQrcode/index.vue'
+import HintContent from './HintContent/index.vue'
 
-export { HoverButton, NaiveProvider, SvgIcon, UserAvatar, Setting, PromptStore, UserInfo, PersonInfo, Preview, MakePPT, ProductPay, OrderQrcode }
+export { HoverButton, NaiveProvider, SvgIcon, UserAvatar, Setting, PromptStore, UserInfo, PersonInfo, Preview, MakePPT, ProductPay, OrderQrcode, HintContent }

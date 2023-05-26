@@ -1,11 +1,12 @@
 import { error } from 'console'
+import moment from 'moment'
 import type { PoolConnection } from 'mysql2/promise'
 import mysql from 'mysql2/promise'
 import { getTodayDate } from './dateAuth'
 
 const pool = mysql.createPool({
-  host: 'mysql',
-  // host: 'localhost',
+  // host: 'mysql',
+  host: 'localhost',
   port: 3306,
   user: 'houp',
   password: '624634',
@@ -58,13 +59,16 @@ interface AdminInfo {
   password: string
 }
 
-interface SalerInfo {
+export interface SalerInfo {
   id: number
   nameid: string
   salekey: string
   nickname: string
   lastlevel: string
   baseurl: string
+  settled: number
+  isblack: number
+  settletime: string
 }
 
 export enum OrderStatus {
@@ -554,16 +558,21 @@ export async function createAnOrderInfo(username: string,
   price: number,
   fenxiao: string,
 ) {
-  if (fenxiao)
-    openid = `${fenxiao}_${openid}`
-
-  const sql = 'INSERT INTO GPTUserOrderInfo (username, openid, productid, createtime, orderid, orderprice) VALUES (?, ?, ?, ?, ?, ?)'
+  let sql = 'INSERT INTO GPTUserOrderInfo (username, openid, productid, createtime, orderid, orderprice) VALUES (?, ?, ?, ?, ?, ?)'
   let connection: PoolConnection
+
+  if (fenxiao) {
+    openid = `${fenxiao}_${openid}`
+    sql = 'INSERT INTO GPTUserOrderInfo (username, openid, productid, createtime, orderid, orderprice, reverse) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  }
 
   try {
     connection = await pool.getConnection()
     const date = await getTodayDate()
-    await connection.query(sql, [username, openid, productid, date, orderid, price])
+    if (fenxiao)
+      await connection.query(sql, [username, openid, productid, date, orderid, price, fenxiao])
+    else
+      await connection.query(sql, [username, openid, productid, date, orderid, price])
   }
   finally {
     connection.release()
@@ -779,6 +788,124 @@ export async function getSalerInfoByNameId(nameid: string) {
   }
   finally {
     connection.release()
+  }
+}
+
+export async function getSalersList(lastlevel: string) {
+  const querySql = 'SELECT * FROM GPTSaler where lastlevel = ?'
+
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [results] = await connection.query(querySql, [lastlevel])
+    const salerInfos = results as SalerInfo[]
+    if (salerInfos)
+      return salerInfos
+    return null
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function getAllSalersList() {
+  const querySql = 'SELECT * FROM GPTSaler'
+
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [results] = await connection.query(querySql)
+    const salerInfos = results as SalerInfo[]
+    if (salerInfos)
+      return salerInfos
+    return null
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function addOrUpdateProxySaler(saler: SalerInfo) {
+  let connection: PoolConnection
+  let params: any[]
+  try {
+    connection = await pool.getConnection()
+    let sql: string
+    if (!saler.id || saler.id < 0) {
+      // 插入
+      const date = await getTodayDate()
+      sql = 'INSERT INTO GPTSaler (nameid, salekey, nickname, lastlevel, baseurl, settled, isblack, settletime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      params = [saler.nameid, saler.nameid, saler.nickname, saler.lastlevel,
+        saler.baseurl, saler.settled, saler.isblack, date]
+    }
+    else {
+      // 更新
+      const date = moment(saler.settletime).format('YYYY-MM-DD HH:mm:ss')
+      sql = `UPDATE GPTSaler SET nameid=?, salekey=?, nickname=?, lastlevel=?, baseurl=?,
+settled=?, isblack=?, settletime=? WHERE id=?`
+      params = [saler.nameid, saler.nameid, saler.nickname, saler.lastlevel,
+        saler.baseurl, saler.settled, saler.isblack, date, saler.id]
+    }
+    const [result] = await connection.query(sql, params) as any[]
+    return result.insertId
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function updateProxySalerSettleMoney(nameid: string, money: number) {
+  let connection: PoolConnection
+  let params: any[]
+  try {
+    connection = await pool.getConnection()
+
+    // 更新
+    const date = await getTodayDate()
+    const sql = 'UPDATE GPTSaler SET settled=?, settletime=? WHERE nameid=?'
+    params = [money, date, nameid]
+    await connection.query(sql, params) as any[]
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function querySalersAllMoney(nameid: string) {
+  const querySql = 'SELECT SUM(orderprice) as total_price FROM GPTUserOrderInfo WHERE reverse = ? AND orderstate = 1'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [rows] = await connection.query(querySql, [nameid])
+    return rows[0].total_price
+  }
+  catch {
+    return -1
+  }
+  finally {
+    connection.release()
+  }
+}
+// 下级代理商总金额
+export async function querySalersProxyAllMoney(nameid: string) {
+  const querySql = `
+    SELECT SUM(oi.orderprice) as total_price
+    FROM GPTUserOrderInfo AS oi
+    JOIN GPTSaler AS s ON oi.reverse = s.nameid
+    WHERE s.lastlevel = ?
+  `
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [rows] = await connection.execute(querySql, [nameid])
+    return rows[0].total_price
+  }
+  catch (error) {
+    return -1
+  }
+  finally {
+    if (connection)
+      connection.release()
   }
 }
 

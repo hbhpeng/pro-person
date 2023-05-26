@@ -17,7 +17,10 @@ function generateSessionId(length = 16): string {
   const hash = createHash('sha256')
   hash.update(sessionId)
 
-  const str = `${process.env.YUAN_YUAN_FENXIAO_ID}_${hash.digest('hex')}`
+  let str = hash.digest('hex')
+  if (process.env.YUAN_YUAN_FENXIAO_ID)
+    str = `${process.env.YUAN_YUAN_FENXIAO_ID}_${str}`
+
   if (str.length > 60)
     return str.substring(0, 58)
 

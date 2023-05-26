@@ -685,7 +685,7 @@ router.post('/wx', async (req, res) => {
             if (fenxiao) {
               // 拿到了分销信息 看看合法吗
               const salerInfo = await SqlOperate.getSalerInfoByNameId(fenxiao)
-              if (salerInfo && salerInfo.baseurl) {
+              if (salerInfo && salerInfo.baseurl && salerInfo.isblack === 0) {
                 // 分销信息 给分销系统发送信息
                 await proxyMiddleware.forwardRequestMethod(`${salerInfo.baseurl}/wx`, 'post', req, res)
               }
@@ -717,7 +717,7 @@ router.post('/wx', async (req, res) => {
           if (fenxiao) {
             // 拿到了分销信息 看看合法吗
             const salerInfo = await SqlOperate.getSalerInfoByNameId(fenxiao)
-            if (salerInfo && salerInfo.baseurl) {
+            if (salerInfo && salerInfo.baseurl && salerInfo.isblack === 0) {
               // 分销信息 转发请求
               await proxyMiddleware.forwardRequestMethod(`${salerInfo.baseurl}/wx`, 'post', req, res)
             }
@@ -1013,6 +1013,129 @@ router.post('/saler/syncuser', async (req, res) => {
     const endday = redisCache.turnDayTimeToNoraml(userInfo.vipendday)
     await SqlOperate.updateUserBenefit(userInfo.username, userInfo.usagecount, endday, userInfo.isVip)
     res.send({ status: 'Success', message: '同步成功', data: '' })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+// 次级分销商列表接口
+router.post('/saler/proxylist', async (req, res) => {
+  try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      req.body.salerid = process.env.YUAN_YUAN_FENXIAO_ID
+      await proxyMiddleware.proxyRequestMethod('post', '/saler/proxylist', req, res)
+      return
+    }
+    if (!sqlAuth(req, res))
+      return
+    const { salerid } = req.body as { salerid: string }
+    let result
+    if (salerid && salerid !== '1')
+      result = await SqlOperate.getSalersList(salerid)
+
+    else
+      result = await SqlOperate.getAllSalersList()
+
+    res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(result) })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/saler/addproxy', async (req, res) => {
+  try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      throw new Error('您无权添加')
+    }
+    if (!sqlAuth(req, res))
+      return
+
+    const { ...salerInfo } = req.body as SqlOperate.SalerInfo
+    const resultId = await SqlOperate.addOrUpdateProxySaler(salerInfo)
+    res.send({ status: 'Success', message: resultId, data: null })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/saler/querymoney', async (req, res) => {
+  try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      if (!req.body.salerid)
+        req.body.salerid = process.env.YUAN_YUAN_FENXIAO_ID
+      await proxyMiddleware.proxyRequestMethod('post', '/saler/querymoney', req, res)
+      return
+    }
+    if (!sqlAuth(req, res))
+      return
+
+    const { salerid } = req.body as { salerid: string }
+    const price = await SqlOperate.querySalersAllMoney(salerid)
+    const salerInfo = await SqlOperate.getSalerInfoByNameId(salerid)
+    res.send({ status: 'Success', message: '查询成功', data: JSON.stringify({ price, settle_price: salerInfo.settled }) })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/saler/queryallmoney', async (req, res) => {
+  try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      throw new Error('您无权访问')
+    }
+    if (!sqlAuth(req, res))
+      return
+
+    const { salerid } = req.body as { salerid: string }
+    const saler_price = await SqlOperate.querySalersAllMoney(salerid)
+    const proxy_price = await SqlOperate.querySalersProxyAllMoney(salerid)
+    const salerInfo = await SqlOperate.getSalerInfoByNameId(salerid)
+    res.send({ status: 'Success', message: '查询成功', data: JSON.stringify({ saler_price, proxy_price, settle_price: salerInfo.settled }) })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+router.post('/saler/settleallmoney', async (req, res) => {
+  try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      throw new Error('您无权访问')
+    }
+    if (!sqlAuth(req, res))
+      return
+
+    const { salerid } = req.body as { salerid: string }
+    const saler_price = await SqlOperate.querySalersAllMoney(salerid)
+    const proxy_price = await SqlOperate.querySalersProxyAllMoney(salerid)
+    if (saler_price === -1 || proxy_price === -1)
+      throw new Error('结算失败')
+    await SqlOperate.updateProxySalerSettleMoney(salerid, proxy_price + saler_price)
+    res.send({ status: 'Success', message: '结算成功', data: '' })
   }
   catch (error) {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))

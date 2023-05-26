@@ -24,7 +24,7 @@ const routes: Array<RouteRecordRaw> = [
     meta: {
       title: '用户管理',
       icon: renderIcon('mdi:user-details'),
-      permissions: ['usermanager_userinfo'],
+      permissions: ['usermanager_userinfo', 'usermanager_proxyinfo'],
       sort: 1,
     },
     children: [
@@ -37,6 +37,16 @@ const routes: Array<RouteRecordRaw> = [
           permissions: ['usermanager_userinfo'],
         },
         component: () => import('@/views/admin/userInfo/userinfo/UserManager.vue'),
+      },
+      {
+        path: 'proxyinfo',
+        name: `${routeName}_proxyinfo`,
+        meta: {
+          title: '下级代理商',
+          keepAlive: true,
+          permissions: ['usermanager_proxyinfo'],
+        },
+        component: () => import('@/views/admin/userInfo/proxyinfo/index.vue'),
       },
     ],
   },

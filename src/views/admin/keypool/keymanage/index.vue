@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { NButton, NCard, NEllipsis, NInput, NSpace, NSpin, NTable, useDialog, useMessage } from 'naive-ui'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import moment from 'moment'
 import {
   changeOpenApi,
   deleteOpenApi,
+  fetchChatConfig,
   reqOpenApiKeys,
 } from '@/api'
 
@@ -19,6 +20,7 @@ const ms = useMessage()
 const openapi = ref('')
 const currentOpenapi = ref('')
 const dialog = useDialog()
+const usage = ref('')
 
 async function requestKeys() {
   loading.value = true
@@ -38,6 +40,25 @@ async function requestKeys() {
     loading.value = false
   }
 }
+
+async function requestKeyUsage() {
+  try {
+    const { data } = await fetchChatConfig()
+    usage.value = data.usage as string
+  }
+  catch {
+    usage.value = '获取使用量失败'
+  }
+}
+
+watch(
+  () => currentOpenapi.value,
+  async (value) => {
+    if (value)
+      await requestKeyUsage()
+  },
+  { deep: true },
+)
 
 // 请求所有的key
 requestKeys()
@@ -115,6 +136,9 @@ const deleteKey = async (keystore: KeyStoreType) => {
       <NSpace vertical>
         <NEllipsis expand-trigger="click" line-clamp="2" :tooltip="false">
           当前秘钥：{{ currentOpenapi }}
+        </NEllipsis>
+        <NEllipsis expand-trigger="click" line-clamp="1" :tooltip="false">
+          当月使用量：{{ usage }}
         </NEllipsis>
         <NSpin :show="loading">
           <NSpace vertical>

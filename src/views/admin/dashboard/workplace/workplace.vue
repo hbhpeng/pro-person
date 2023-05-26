@@ -6,6 +6,7 @@ import VisiTab from './components/VisiTab.vue'
 import {
   adminGetTotalOrderReq,
   adminGetTotalVisitReq,
+  querySalerMoney,
 } from '@/api'
 interface HourResult {
   hour: number
@@ -34,7 +35,13 @@ interface TotalOrderReqData {
   weak_result: WeekResut
 }
 
+interface SalerMoney {
+  price: number
+  settle_price: number
+}
+
 const ms = useMessage()
+const isProxyBuss = import.meta.env.VITE_GLOB_APP_PROXY === 'true'
 
 // const defalutData: TotalVisitReqData = {
 // total_result: { total_visits: '9' },
@@ -49,6 +56,7 @@ const ms = useMessage()
 
 const totalVisitData = ref<TotalVisitReqData>() // reactive(defalutData)
 const totalOrderData = ref<TotalOrderReqData>()
+const totalSalerMoney = ref<SalerMoney>()
 
 const totalVisitShow = computed(() => {
   if (totalVisitData.value?.total_result?.total_visits)
@@ -149,7 +157,6 @@ async function getTotalVisitReq() {
     const { data } = await adminGetTotalVisitReq()
     const result = JSON.parse(data as string)
     totalVisitData.value = result
-
     // console.log(result)
   }
   catch (error: any) {
@@ -171,13 +178,30 @@ async function getTotalOrderReq() {
     ms.error('查询失败，请尝试刷新页面')
   }
 }
+
+async function getSalerMoneyReq() {
+  try {
+    const { data } = await querySalerMoney('')
+    const result = JSON.parse(data as string)
+    totalSalerMoney.value = result
+  }
+  catch {
+    ms.error('查询代理商金额失败，请尝试刷新页面')
+  }
+}
+if (isProxyBuss)
+  getSalerMoneyReq()
+
 getTotalVisitReq()
 getTotalOrderReq()
 </script>
 
 <template>
   <div>
-    <NGrid x-gap="12" :cols="3">
+    <div style="margin-bottom: 10px;">
+      尊贵的代理商您好，申请结算或其它问题请联系微信号: chatgptstu
+    </div>
+    <NGrid x-gap="12" y-gap="12" :cols="3">
       <NGi>
         <NCard title="访问量" size="small" class="cursor-pointer project-card-item ms:w-1/2 md:w-1/3" hoverable>
           <div class="flex">
@@ -267,6 +291,37 @@ getTotalOrderReq()
               <div class="text-sn">
                 <!-- <CountTo :startVal="1" :endVal="visits.amount" /> -->
                 <NNumberAnimation show-separator :from="0" :to="totalOrderShow" :active="totalOrderShow > 0" />
+              </div>
+            </div>
+          </template>
+        </NCard>
+      </NGi>
+      <NGi v-if="isProxyBuss">
+        <NCard title="可结算" size="small">
+          <div class="flex">
+            <span>
+              <NIcon size="30">
+                <GithubOutlined />
+              </NIcon>
+            </span>
+            <span class="text-2xl ml-4">
+              <NNumberAnimation show-separator :from="0" :to="weakOrderShow" :active="weakOrderShow > 0" />
+            </span>
+          </div>
+
+          <template #header-extra>
+            <NTag type="error">
+              总
+            </NTag>
+          </template>
+          <template #footer>
+            <div class="flex justify-between">
+              <div class="text-sn">
+                已结算：{{ totalSalerMoney.settle_price }}
+              </div>
+              <div class="text-sn">
+                <!-- <CountTo :startVal="1" :endVal="visits.amount" /> -->
+                {{ totalSalerMoney.price }}
               </div>
             </div>
           </template>

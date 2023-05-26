@@ -51,6 +51,7 @@ export default {
       openapi: '',
       queryname: '',
       active: false,
+      isProxyBuss: import.meta.env.VITE_GLOB_APP_PROXY === 'true',
     }
   },
   computed: {
@@ -232,7 +233,7 @@ export default {
         </NCard>
       </NDrawer>
 
-      <button style="margin-bottom: 10px;" @click="showAddUser">
+      <button v-if="!isProxyBuss" style="margin-bottom: 10px;" @click="showAddUser">
         添加用户
       </button>
       <NInput v-model:value="queryname" placeholder="输入用户名查询">

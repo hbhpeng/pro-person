@@ -29,9 +29,13 @@ import {
   PersonInfo,
   ProductPay,
   PromptStore,
+  SvgIcon,
+
   UserInfo,
 } from '@/components/common'
-import { router } from '@/router'
+import {
+  router,
+} from '@/router'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
@@ -105,9 +109,12 @@ const getMobileClass = computed < CSSProperties > (() => {
     return {
       position: 'fixed',
       zIndex: 50,
+      backgroundColor: '#f3f3f3',
     }
   }
-  return {}
+  return {
+    backgroundColor: '#f3f3f3',
+  }
 })
 
 const mobileSafeArea = computed(() => {
@@ -156,7 +163,9 @@ const userWantVip = () => {
 }
 
 const moreFunctions = () => {
-  router.push({ name: 'morev' })
+  router.push({
+    name: 'morev',
+  })
 }
 </script>
 
@@ -180,7 +189,10 @@ const moreFunctions = () => {
           <List />
         </div>
         <div class="p-1">
-          <NButton block @click="moreFunctions">
+          <NButton class="content-left" block secondary @click="moreFunctions">
+            <template #icon>
+              <SvgIcon icon="mingcute:more-3-line" />
+            </template>
             更多功能
           </NButton>
         </div>
@@ -189,33 +201,48 @@ const moreFunctions = () => {
             {{ $t('store.siderButton') }}
           </NButton>
         </div> -->
+        <!--        <div class="p-1">
+<NButton class="content-left" block secondary @click="aiPPTShow = true">
+<template #icon>
+<SvgIcon icon="teenyicons:ppt-outline" />
+</template>
+AI制作ppt
+</NButton>
+</div> -->
         <div class="p-1">
-          <NButton block @click="aiPPTShow = true">
-            AI制作ppt
-          </NButton>
-        </div>
-        <div class="p-1">
-          <NButton block @click="contactServer">
+          <NButton class="content-left" block secondary @click="contactServer">
+            <template #icon>
+              <SvgIcon icon="mdi:customer-service" />
+            </template>
             联系客服
           </NButton>
         </div>
         <div class="p-1">
-          <NButton block @click="showChongZhi">
+          <NButton class="content-left" block secondary @click="showChongZhi">
+            <template #icon>
+              <SvgIcon icon="icon-park-outline:light-member" />
+            </template>
             充值字数
           </NButton>
         </div>
         <div v-if="loginBtShow" class="p-1">
-          <NButton block @click="loginVwShow = true">
+          <NButton class="content-left" block secondary @click="loginVwShow = true">
+            <template #icon>
+              <SvgIcon icon="material-symbols:login" />
+            </template>
             立即登录
           </NButton>
         </div>
-        <div v-else class="p-1">
-          <NButton block @click="personVwShow = true">
-            个人中心
-          </NButton>
-        </div>
+        <!-- <div v-else class="p-1">
+<NButton class="content-left" block secondary @click="personVwShow = true">
+<template #icon>
+<SvgIcon icon="icon-park-outline:personal-collection" />
+</template>
+个人中心
+</NButton>
+</div> -->
       </main>
-      <Footer />
+      <Footer :show-person="!loginBtShow" @click-person="personVwShow = true" />
     </div>
   </NLayoutSider>
   <template v-if="isMobile">
@@ -228,3 +255,9 @@ const moreFunctions = () => {
   <ProductPay v-model:visible="payShow" @create-order="createOrder" @pay-should-login="payShouldLogin" />
   <OrderQrcode v-model:visible="orderImgShow" :productid="payId" />
 </template>
+
+<style scoped>
+.content-left {
+justify-content: left;
+}
+</style>

@@ -11,7 +11,7 @@ import { useChat } from './hooks/useChat'
 import { useCopyCode } from './hooks/useCopyCode'
 import { useUsingContext } from './hooks/useUsingContext'
 import HeaderComponent from './components/Header/index.vue'
-import { HoverButton, SvgIcon } from '@/components/common'
+import { HintContent, HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
 import { askFileQuestion, fetchChatAPIProcess, getPromotImage } from '@/api'
@@ -81,6 +81,10 @@ const receiveMessage = (content: string) => {
     },
   )
   scrollToBottom()
+}
+
+const clickTips = (content: string) => {
+  prompt.value = content
 }
 
 async function onConversation() {
@@ -557,10 +561,11 @@ onUnmounted(() => {
             <Upload @receive-message="receiveMessage" />
           </template>
           <template v-if="!dataSources.length && !isFile">
-            <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
+            <!-- <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
               <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
               <span>Aha~</span>
-            </div>
+            </div> -->
+            <HintContent @click-tips="clickTips" />
           </template>
           <template v-else>
             <div>

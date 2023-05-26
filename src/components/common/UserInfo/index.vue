@@ -28,6 +28,8 @@ const props = defineProps < Props > ()
 
 const emit = defineEmits < Emit > ()
 
+const isProxyBuss = import.meta.env.VITE_GLOB_APP_PROXY === 'true'
+
 const authStore = useAuthStoreWithout()
 
 interface Props {
@@ -51,10 +53,21 @@ const password = ref('')
 const ms = useMessage()
 const loading = ref(false)
 // 1：二维码 2：账号密码
-const loginType = ref(1)
+const loginType1 = ref(1)
 const qrcodeRef = ref(null)
 const qrcodeDataUrl = ref('')
 let queryCount = 0
+const loginType = computed({
+  get() {
+    if (isProxyBuss)
+      return 1
+
+    return loginType1.value
+  },
+  set(value: number) {
+    loginType1.value = value
+  },
+})
 
 const startQueryLoginInfo = async () => {
   try {
@@ -228,7 +241,7 @@ const changeLoginType = () => {
         >
           <span v-if="loginType === 2" style="text-decoration-line: underline;">扫描微信二维码登录</span>
           <div v-else>
-            <span style="text-decoration-line: underline;">使用账号登录</span><br>
+            <span v-if="!isProxyBuss" style="text-decoration-line: underline;">使用账号登录</span><br>
             <span style="color: gray;">微信扫描二维码自动登录</span>
           </div>
         </button>

@@ -272,3 +272,38 @@ export function askFileQuestion<T>(question: string, signal?: GenericAbortSignal
     signal,
   })
 }
+
+// 分销商接口
+export function queryProxylist<T>() {
+  return post<T>({
+    url: '/saler/proxylist',
+  })
+}
+
+export function addSalerProxy<T>(salerInfo: any) {
+  return post<T>({
+    url: '/saler/addproxy',
+    data: { ...salerInfo },
+  })
+}
+// return {price, settle_price}
+export function querySalerMoney<T>(salerid: string) {
+  return post<T>({
+    url: '/saler/querymoney',
+    data: { salerid },
+  })
+}
+// return { saler_price, proxy_price, settle_price }
+export function querySalerAllMoney<T>(salerid: string) {
+  return post<T>({
+    url: '/saler/queryallmoney',
+    data: { salerid },
+  })
+}
+
+export function settleSalerAllMoney<T>(salerid: string) {
+  return post<T>({
+    url: '/saler/settleallmoney',
+    data: { salerid },
+  })
+}

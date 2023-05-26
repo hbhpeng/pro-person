@@ -38,8 +38,10 @@ export const useAuthStore = defineStore('auth-store', {
       try {
         const { data } = await fetchSession<SessionResponse>()
         this.session = { ...data }
-        if (this.session?.sessionid)
+        if (this.session?.sessionid) {
+          this.sessionid = this.session?.sessionid
           ss.set('sessionid', this.session?.sessionid)
+        }
         return Promise.resolve(data)
       }
       catch (error) {
