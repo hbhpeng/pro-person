@@ -164,3 +164,4 @@ Server is running on port 3002
 > NODE_ENV=development esno ./src/index.ts
 
 Server is running on port 3002
+ ELIFECYCLE  Command failed with exit code 130.
