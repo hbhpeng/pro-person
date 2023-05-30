@@ -3,6 +3,7 @@ import { AdminLayout } from '@/views/admin/constant'
 // import { DashboardOutlined } from '@vicons/antd';
 import { renderIcon } from '@/utils/functions/index'
 
+const isProxyBuss = import.meta.env.VITE_GLOB_APP_PROXY === 'true'
 const routeName = 'usermanager'
 
 /**
@@ -51,5 +52,18 @@ const routes: Array<RouteRecordRaw> = [
     ],
   },
 ]
+
+if (!isProxyBuss) {
+  routes[0].children?.push({
+    path: 'psstationinfo',
+    name: `${routeName}_psstationinfo`,
+    meta: {
+      title: '个人站信息',
+      keepAlive: true,
+      permissions: ['usermanager_psstationinfo'],
+    },
+    component: () => import('@/views/admin/userInfo/psstationinfo/index.vue'),
+  })
+}
 
 export default routes

@@ -10,7 +10,7 @@ import moment from 'moment'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
 import { chatConfig, chatReplyProcess, currentModel, initChatGPTApi } from './chatgpt'
-import { auth, signUser, sqlAuth, userSqlAuth } from './middleware/auth'
+import { auth, psStSqlAuth, signUser, sqlAuth, userSqlAuth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
 import { addPasswordToFile, removePasswordFromFile } from './utils/store'
@@ -229,6 +229,9 @@ router.post('/product/query', async (req, res) => {
       return
     }
 
+    if (!sqlAuth(req, res))
+      return
+
     const salerid = req.body.salerid as string
     const productInfos: SqlOperate.OrderProductInfo[] = await SqlOperate.queryAllProductInfo(salerid)
     res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(productInfos) })
@@ -240,6 +243,11 @@ router.post('/product/query', async (req, res) => {
 
 router.post('/product/delete', async (req, res) => {
   try {
+    if (shouldProxyRequest) {
+      await proxyMiddleware.proxyRequestMethod('post', '/product/delete', req, res)
+      return
+    }
+
     if (!sqlAuth(req, res))
       return
 
@@ -270,10 +278,24 @@ router.post('/admin/api/visits_statis', async (req, res) => {
 
 router.post('/admin/api/order_statis', async (req, res) => {
   try {
+    if (shouldProxyRequest) {
+      // 分销转发
+      if (!req.body.salerid)
+        req.body.salerid = process.env.YUAN_YUAN_FENXIAO_ID
+      await proxyMiddleware.proxyRequestMethod('post', '/admin/api/order_statis', req, res)
+      return
+    }
+
     if (!sqlAuth(req, res))
       return
 
-    const result = await SqlOperate.getAllOrderStatis()
+    const { salerid } = req.body as { salerid: string }
+    let result: any
+    if (salerid && salerid !== '1')
+      result = await SqlOperate.getSalerAllOrderStatis(salerid)
+    else
+      result = await SqlOperate.getAllOrderStatis()
+
     res.send({ status: 'Success', message: '操作成功', data: JSON.stringify(result) })
   }
   catch (error) {
@@ -1136,6 +1158,73 @@ router.post('/saler/settleallmoney', async (req, res) => {
       throw new Error('结算失败')
     await SqlOperate.updateProxySalerSettleMoney(salerid, proxy_price + saler_price)
     res.send({ status: 'Success', message: '结算成功', data: '' })
+  }
+  catch (error) {
+    res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+  }
+  finally {
+    res.end()
+  }
+})
+
+// 个人站
+router.post('/gpt/addcode', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { ...productInfo } = req.body as SqlOperate.PersonStation
+    if (!productInfo.authcode || !productInfo.weburl)
+      throw new Error('参数错误')
+    const pid = await SqlOperate.addAPsStation(productInfo)
+    res.send({ status: 'Success', message: pid, data: null })
+  }
+  catch (error) {
+    // console.log(error)
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/gpt/queryallcode', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const productInfos: SqlOperate.PersonStation[] = await SqlOperate.queryAllPsStation()
+    res.send({ status: 'Success', message: '查询成功', data: JSON.stringify(productInfos) })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/gpt/deletecode', async (req, res) => {
+  try {
+    if (!sqlAuth(req, res))
+      return
+
+    const { ...productInfo } = req.body as SqlOperate.PersonStation
+    if (!productInfo.id)
+      throw new Error('id不能为空')
+    await SqlOperate.removeAPsStation(productInfo.id)
+    res.send({ status: 'Success', message: '删除成功', data: null })
+  }
+  catch (error) {
+    res.send({ status: 'Fail', message: '操作失败', data: null })
+  }
+})
+
+router.post('/gpt/authcode', async (req, res) => {
+  try {
+    const { authcode, host } = req.body as { authcode: string; host: string }
+    const decodeCode = psStSqlAuth(authcode)
+    if (!decodeCode)
+      throw new Error('您没有授权')
+
+    const info = await SqlOperate.queryPsStationByCode(decodeCode)
+    if (!info.weburl.includes(host))
+      throw new Error('您的网站没有授权')
+    res.send({ status: 'Success', message: '授权成功', data: JSON.stringify(info) })
   }
   catch (error) {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))

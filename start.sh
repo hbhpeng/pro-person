@@ -1,6 +1,6 @@
 
 cd ./service
-nohup pnpm start > service.log &
+nohup pnpm start &
 echo "Start service complete!"
 
 

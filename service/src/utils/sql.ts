@@ -4,9 +4,22 @@ import type { PoolConnection } from 'mysql2/promise'
 import mysql from 'mysql2/promise'
 import { getTodayDate } from './dateAuth'
 
-const pool = mysql.createPool({
-  // host: 'mysql',
-  host: 'localhost',
+let hostname = 'localhost'
+
+if (process.env.NODE_ENV === 'production') {
+  // 在生产环境中执行特定操作
+  hostname = 'mysql'
+}
+else if (process.env.NODE_ENV === 'development') {
+  // 在开发环境中执行特定操作
+}
+else {
+  // 在其他情况下执行默认操作
+}
+
+export const pool = mysql.createPool({
+  host: hostname,
+  // host: 'localhost',
   port: 3306,
   user: 'houp',
   password: '624634',
@@ -160,6 +173,25 @@ export async function getAllOrderStatis() {
     querySql = `SELECT COUNT(DISTINCT id) AS weak_order, SUM(orderprice) AS weak_money FROM GPTUserOrderInfo WHERE
 createtime BETWEEN DATE_SUB(NOW(), INTERVAL 7 DAY) AND NOW() AND orderstate = 1`
     const [weak_result] = await connection.query(querySql)
+    return { total_result: total_result[0], weak_result: weak_result[0] }
+  }
+  catch (error) {
+    console.error(`Error querying database: ${error.stack}`)
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function getSalerAllOrderStatis(nameid: string) {
+  let querySql = 'SELECT COUNT(DISTINCT id) AS total_order, SUM(orderprice) AS total_money FROM GPTUserOrderInfo WHERE reverse = ? AND orderstate = 1'
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const [total_result] = await connection.query(querySql, [nameid])
+    querySql = `SELECT COUNT(DISTINCT id) AS weak_order, SUM(orderprice) AS weak_money FROM GPTUserOrderInfo WHERE
+createtime BETWEEN DATE_SUB(NOW(), INTERVAL 7 DAY) AND NOW() AND reverse = ? AND orderstate = 1`
+    const [weak_result] = await connection.query(querySql, [nameid])
     return { total_result: total_result[0], weak_result: weak_result[0] }
   }
   catch (error) {
@@ -906,6 +938,84 @@ export async function querySalersProxyAllMoney(nameid: string) {
   finally {
     if (connection)
       connection.release()
+  }
+}
+
+// 个人站相关
+export interface PersonStation {
+  id: number
+  authcode: string
+  nickname: string
+  weburl: string
+  reverse: string
+  openaikey: string
+}
+
+export async function addAPsStation(product: PersonStation) {
+  let connection: PoolConnection
+  let params: any[]
+  try {
+    connection = await pool.getConnection()
+    let sql: string
+    if (!product.id || product.id < 0) {
+      // 插入
+      sql = 'INSERT INTO GPTPsStation (authcode, nickname, weburl, reverse, openaikey) VALUES (?, ?, ?, ?, ?)'
+      params = [product.authcode, product.nickname, product.weburl, product.reverse, product.openaikey]
+    }
+    else {
+      // 更新
+      sql = 'UPDATE GPTPsStation SET authcode=?, nickname=?, weburl=?, reverse=?, openaikey=? WHERE id=?'
+      params = [product.authcode, product.nickname, product.weburl, product.reverse, product.openaikey, product.id]
+    }
+    const [result] = await connection.query(sql, params) as any[]
+    return result.insertId
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function removeAPsStation(productid: number) {
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+    const sql = 'DELETE FROM GPTPsStation WHERE id=?'
+    await connection.query(sql, [productid])
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function queryAllPsStation() {
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+
+    const sql = 'SELECT * FROM GPTPsStation'
+    const [results] = await connection.query(sql)
+    const resultData = results as PersonStation[]
+    return resultData
+  }
+  finally {
+    connection.release()
+  }
+}
+
+export async function queryPsStationByCode(authcode: string) {
+  let connection: PoolConnection
+  try {
+    connection = await pool.getConnection()
+
+    const sql = 'SELECT * FROM GPTPsStation WHERE authcode = ?'
+    const [results] = await connection.query(sql, [authcode])
+    const [productInfo] = results as PersonStation[]
+    if (productInfo)
+      return productInfo as PersonStation
+    return null
+  }
+  finally {
+    connection.release()
   }
 }
 

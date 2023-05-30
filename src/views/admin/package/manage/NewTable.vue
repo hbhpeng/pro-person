@@ -93,7 +93,7 @@ const columns = createColumns({
     emit('deleteItem', row)
   },
 })
-const pagination = true as const
+const pagination = { pageSize: 15 } as const
 </script>
 
 <template>

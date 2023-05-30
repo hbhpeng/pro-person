@@ -102,6 +102,19 @@ const weakOrderShow = computed(() => {
   return 0
 })
 
+const hasSettledShow = computed(() => {
+  if (totalSalerMoney.value?.settle_price)
+    return totalSalerMoney.value.settle_price
+  return 0
+})
+
+const canSettledShow = computed(() => {
+  if (totalSalerMoney.value?.price)
+    return totalSalerMoney.value.price - hasSettledShow.value
+
+  return 0
+})
+
 const hourCharData = computed(() => {
   if (totalVisitData.value?.hour_result && totalVisitData.value?.hour_result.length > 0) {
     const data = totalVisitData.value?.hour_result
@@ -305,7 +318,8 @@ getTotalOrderReq()
               </NIcon>
             </span>
             <span class="text-2xl ml-4">
-              <NNumberAnimation show-separator :from="0" :to="weakOrderShow" :active="weakOrderShow > 0" />
+              <!-- <NNumberAnimation show-separator :from="0" :to="weakOrderShow" :active="weakOrderShow > 0" /> -->
+              {{ canSettledShow }}
             </span>
           </div>
 
@@ -317,11 +331,11 @@ getTotalOrderReq()
           <template #footer>
             <div class="flex justify-between">
               <div class="text-sn">
-                已结算：{{ totalSalerMoney.settle_price }}
+                已结算：
               </div>
               <div class="text-sn">
                 <!-- <CountTo :startVal="1" :endVal="visits.amount" /> -->
-                {{ totalSalerMoney.price }}
+                {{ hasSettledShow }}
               </div>
             </div>
           </template>

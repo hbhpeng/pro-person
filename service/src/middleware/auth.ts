@@ -3,6 +3,7 @@ import { isNotEmptyString } from '../utils/is'
 // const jwt = require('jsonwebtoken')
 
 const secret = 'aoid&^isen[Iff_=eOSL@#feijfe%iKL}S'
+const psSecret = '724f8bbce0dd65c678715f53c471ae8706949d'
 
 const auth = async (req, res, next) => {
   const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
@@ -65,4 +66,28 @@ const userSqlAuth = (req, res) => {
   return auth
 }
 
-export { auth, sqlAuth, signUser, userSqlAuth }
+const signPsStation = (pscode: string) => {
+  return jwt.sign({ pscode }, psSecret, {
+    expiresIn: (60 * 60 * 24) * 7,
+  })
+}
+
+const psStSqlAuth = (token) => {
+  let isAuth = ''
+  if (token) {
+    jwt.verify(token, psSecret, (error, decoded) => {
+      const tokenFlag = error?.name
+      if (tokenFlag === 'TokenExpiredError' || tokenFlag === 'JsonWebTokenError')
+        isAuth = ''
+
+      else
+        isAuth = decoded.pscode
+    })
+  }
+  if (isAuth)
+    return isAuth
+
+  return ''
+}
+
+export { auth, sqlAuth, signUser, userSqlAuth, signPsStation, psStSqlAuth }

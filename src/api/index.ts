@@ -307,3 +307,24 @@ export function settleSalerAllMoney<T>(salerid: string) {
     data: { salerid },
   })
 }
+
+// 个人站接口
+export function queryPsStationlist<T>() {
+  return post<T>({
+    url: '/gpt/queryallcode',
+  })
+}
+
+export function addPsStation<T>(salerInfo: any) {
+  return post<T>({
+    url: '/gpt/addcode',
+    data: { ...salerInfo },
+  })
+}
+
+export function deletePsStaion<T>(psInfo: any) {
+  return post<T>({
+    url: '/gpt/deletecode',
+    data: { ...psInfo },
+  })
+}

@@ -144,8 +144,19 @@ export const getWechatPayParam = (prepay_id: string) => {
 }
 
 export const replySubscribeData = (from: string, to: string) => {
+  const content = `非常感谢您关注我们的公众号！我们是一家专注于跨境电商和ChatGPT相关内容的平台。我们致力于为广大用户提供最新、最有价值的跨境电商行业动态和ChatGPT应用技巧，帮助大家更好地了解这个行业并获取成功。作为一家专业的平台，我们拥有一支充满活力和创新精神的团队，他们都有着丰富的实战经验和深厚的专业知识。我们将不断探索新的领域，不断推出更加优质的内容，为广大读者打造一个全面、权威、有趣、易懂的跨境电商和ChatGPT学习平台。同时，我们提供：
+
+1 海外VPS代理/搭建
+
+2 ChatGPT镜像站分销/搭建
+
+3 独立站搭建
+
+4 微信小程序制
+
+5 App应用制作`
   const opt = { xmldec: null, rootName: 'xml', allowSurrogateChars: true, cdata: true }
-  const reply = new xml2js.Builder(opt).buildObject({ FromUserName: from + forceCData, ToUserName: to + forceCData, CreateTime: Date.now(), MsgType: `text${forceCData}`, Content: `你好${forceCData}` })
+  const reply = new xml2js.Builder(opt).buildObject({ FromUserName: from + forceCData, ToUserName: to + forceCData, CreateTime: Date.now(), MsgType: `text${forceCData}`, Content: `${content}${forceCData}` })
   const finalReply = reply.replace(new RegExp(forceCData, 'g'), '')
   return finalReply
 }
@@ -157,7 +168,7 @@ export const replyUserSendMessageData = (xmlData: any) => {
     ToUserName: xmlData.fromusername[0] + forceCData,
     CreateTime: Date.now(),
     MsgType: `text${forceCData}`,
-    Content: `点击。。。${forceCData}`,
+    Content: `ChatGPT 1分钱享用 https://aichat.apetech.monster${forceCData}`,
   })
   const finalReply = reply.replace(new RegExp(forceCData, 'g'), '')
   return finalReply
