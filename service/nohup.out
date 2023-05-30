@@ -1,0 +1,156 @@
+
+> chatgpt-web-service@1.0.0 start /Users/wuzm/WorkCode/chatgpt-person/service
+> NODE_ENV=development esno ./src/index.ts
+
+Server is running on port 3002
+{
+  total_result: { total_order: 0, total_money: null },
+  weak_result: { weak_order: 0, weak_money: null }
+}
+Error: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?)' at line 1
+    at PromisePoolConnection.query (/Users/wuzm/WorkCode/chatgpt-person/service/node_modules/.pnpm/mysql2@3.2.3/node_modules/mysql2/promise.js:93:22)
+    at Object.addAPsStation (/Users/wuzm/WorkCode/chatgpt-person/service/src/utils/sql.ts:969:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at <anonymous> (/Users/wuzm/WorkCode/chatgpt-person/service/src/index.ts:1182:17) {
+  code: 'ER_PARSE_ERROR',
+  errno: 1064,
+  sql: "INSERT INTO GPTPsStation (authcode, nickname, weburl, reverse, openaikey) VALUES ('asdfa', 'asdfa', 'sadfasd', '1', ?)",
+  sqlState: '42000',
+  sqlMessage: "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?)' at line 1"
+}
+ ELIFECYCLE  Command failed with exit code 130.
+
+> chatgpt-web-service@1.0.0 start /Users/wuzm/WorkCode/chatgpt-person/service
+> esno ./src/index.ts
+
+Server is running on port 3002
+sendMessage (31 tokens) {
+  max_tokens: 1000,
+  model: 'gpt-3.5-turbo',
+  temperature: 0.8,
+  top_p: 1,
+  presence_penalty: 1,
+  messages: [
+    {
+      role: 'system',
+      content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."
+    },
+    { role: 'user', content: '123', name: undefined }
+  ],
+  stream: true
+}
+sendMessage (32 tokens) {
+  max_tokens: 1000,
+  model: 'gpt-3.5-turbo',
+  temperature: 0.8,
+  top_p: 1,
+  presence_penalty: 1,
+  messages: [
+    {
+      role: 'system',
+      content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."
+    },
+    { role: 'user', content: '2222', name: undefined }
+  ],
+  stream: true
+}
+FetchError: request to https://api.openai.com/v1/chat/completions failed, reason: connect ETIMEDOUT 103.226.246.99:443
+    at ClientRequest.<anonymous> (/Users/wuzm/WorkCode/chatgpt-person/service/node_modules/.pnpm/node-fetch@3.3.0/node_modules/node-fetch/src/index.js:108:11)
+    at ClientRequest.emit (node:events:524:35)
+    at ClientRequest.emit (node:domain:489:12)
+    at TLSSocket.socketErrorListener (node:_http_client:495:9)
+    at TLSSocket.emit (node:events:512:28)
+    at TLSSocket.emit (node:domain:489:12)
+    at emitErrorNT (node:internal/streams/destroy:151:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:116:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  type: 'system',
+  errno: 'ETIMEDOUT',
+  code: 'ETIMEDOUT',
+  erroredSysCall: 'connect'
+}
+ ELIFECYCLE  Command failed with exit code 130.
+
+> chatgpt-web-service@1.0.0 start /Users/wuzm/WorkCode/chatgpt-person/service
+> esno ./src/index.ts
+
+Server is running on port 3002
+sendMessage (31 tokens) {
+  max_tokens: 1000,
+  model: 'gpt-3.5-turbo',
+  temperature: 0.8,
+  top_p: 1,
+  presence_penalty: 1,
+  messages: [
+    {
+      role: 'system',
+      content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."
+    },
+    { role: 'user', content: '123', name: undefined }
+  ],
+  stream: true
+}
+FetchError: request to https://api.openai.com/v1/chat/completions failed, reason: connect ETIMEDOUT 103.226.246.99:443
+    at ClientRequest.<anonymous> (/Users/wuzm/WorkCode/chatgpt-person/service/node_modules/.pnpm/node-fetch@3.3.0/node_modules/node-fetch/src/index.js:108:11)
+    at ClientRequest.emit (node:events:524:35)
+    at ClientRequest.emit (node:domain:489:12)
+    at TLSSocket.socketErrorListener (node:_http_client:495:9)
+    at TLSSocket.emit (node:events:512:28)
+    at TLSSocket.emit (node:domain:489:12)
+    at emitErrorNT (node:internal/streams/destroy:151:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:116:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  type: 'system',
+  errno: 'ETIMEDOUT',
+  code: 'ETIMEDOUT',
+  erroredSysCall: 'connect'
+}
+111111111
+123
+sendMessage (31 tokens) {
+  max_tokens: 1000,
+  model: 'gpt-3.5-turbo',
+  temperature: 0.8,
+  top_p: 1,
+  presence_penalty: 1,
+  messages: [
+    {
+      role: 'system',
+      content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."
+    },
+    { role: 'user', content: '123', name: undefined }
+  ],
+  stream: true
+}
+ ELIFECYCLE  Command failed with exit code 130.
+
+> chatgpt-web-service@1.0.0 start /Users/wuzm/WorkCode/chatgpt-person/service
+> esno ./src/index.ts
+
+Server is running on port 3002
+sendMessage (31 tokens) {
+  max_tokens: 1000,
+  model: 'gpt-3.5-turbo',
+  temperature: 0.8,
+  top_p: 1,
+  presence_penalty: 1,
+  messages: [
+    {
+      role: 'system',
+      content: "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown."
+    },
+    { role: 'user', content: '123', name: undefined }
+  ],
+  stream: true
+}
+TimeoutError: OpenAI timed out waiting for response
+    at <anonymous> (/Users/wuzm/WorkCode/chatgpt-person/service/node_modules/.pnpm/p-timeout@6.1.1/node_modules/p-timeout/index.js:70:24)
+    at new Promise (<anonymous>)
+    at pTimeout (/Users/wuzm/WorkCode/chatgpt-person/service/node_modules/.pnpm/p-timeout@6.1.1/node_modules/p-timeout/index.js:48:28)
+    at Object.sendMessage (/Users/wuzm/WorkCode/chatgpt-person/service/node_modules/.pnpm/chatgpt@5.2.2/node_modules/chatgpt/build/index.js:366:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at chatReplyProcess (/Users/wuzm/WorkCode/chatgpt-person/service/src/chatgpt/index.ts:160:22)
+    at <anonymous> (/Users/wuzm/WorkCode/chatgpt-person/service/src/index.ts:97:5)
+111111111
+123
+ ELIFECYCLE  Command failed with exit code 130.
