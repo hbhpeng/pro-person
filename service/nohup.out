@@ -154,3 +154,8 @@ TimeoutError: OpenAI timed out waiting for response
 111111111
 123
  ELIFECYCLE  Command failed with exit code 130.
+
+> chatgpt-web-service@1.0.0 start /Users/wuzm/WorkCode/chatgpt-person/service
+> NODE_ENV=development esno ./src/index.ts
+
+Server is running on port 3002

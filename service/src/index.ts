@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid'
 import moment from 'moment'
 import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
-import { chatConfig, chatReplyProcess, currentModel, initChatGPTApi } from './chatgpt'
+import { changeapikey, chatConfig, chatReplyProcess, currentModel } from './chatgpt'
 import { auth, psStSqlAuth, signUser, sqlAuth, userSqlAuth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
@@ -118,6 +118,7 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
     res.write(JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
   }
   finally {
+    changeapikey(SqlOperate.getNextOpenAiKey())
     res.end()
   }
 })
@@ -376,7 +377,8 @@ router.post('/admin/api/changeapikeys', async (req, res) => {
     const { apikey } = req.body as { apikey: string }
     await changeDatabaseApiKey(apikey)
     process.env.OPENAI_API_KEY = apikey
-    initChatGPTApi()
+    // initChatGPTApi()
+    changeapikey(apikey)
     res.send({ status: 'Success', message: '操作成功', data: null })
   }
   catch (error) {

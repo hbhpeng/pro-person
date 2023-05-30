@@ -99,6 +99,8 @@ interface VisitCache {
   uniqueVisitors: Set<string>
 }
 
+export const totoal_apikeys: any[] = []
+
 export const visitCache: VisitCache = {
   visits: 0,
   uniqueVisitors: new Set(),
@@ -336,6 +338,8 @@ export async function deleteOpenApiKey(key: string) {
   try {
     connection = await pool.getConnection()
     await connection.execute(sql, [key])
+
+    initApiKeys()
     return true
   }
   catch (error) {
@@ -398,6 +402,8 @@ export async function changeDatabaseApiKey(key: string) {
     else {
       const sqlInsert = `INSERT INTO GPTAiKey (aikey, begindate) VALUES ('${key}', '${date}')`
       await connection.query(sqlInsert)
+
+      initApiKeys()
     }
     return true
   }
@@ -1037,3 +1043,37 @@ export async function validateUser(username: string, password: string) {
 }
 
 // export function handleSqlError()
+let apikey_index = 0
+async function initApiKeys() {
+  try {
+    totoal_apikeys.splice(0)
+    const tmpApikeys = await databaseApiKeys()
+    if (tmpApikeys)
+      totoal_apikeys.push(...tmpApikeys)
+  }
+  catch {
+
+  }
+}
+
+export function getNextOpenAiKey() {
+  try {
+    if (totoal_apikeys.length === 0)
+      initApiKeys()
+
+    if (totoal_apikeys.length === 0)
+      return ''
+
+    if (apikey_index >= totoal_apikeys.length)
+      apikey_index = 0 // 将索引重置为数组开头
+
+    const returnKey = totoal_apikeys[apikey_index].key
+    apikey_index += 1
+    return returnKey
+  }
+  catch {
+    return ''
+  }
+}
+
+initApiKeys()

@@ -82,6 +82,11 @@ async function initChatGPTApi() {
   }
 }
 
+function changeapikey(key: string) {
+  (api as ChatGPTAPI).apiKey = key
+  process.env.OPENAI_API_KEY = key
+}
+
 initChatGPTApi()
 
 // (async () => {
@@ -265,4 +270,4 @@ function currentModel(): ApiModel {
 
 export type { ChatContext, ChatMessage }
 
-export { chatReplyProcess, chatConfig, currentModel, initChatGPTApi }
+export { chatReplyProcess, chatConfig, currentModel, initChatGPTApi, changeapikey }
