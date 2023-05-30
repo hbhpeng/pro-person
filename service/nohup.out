@@ -159,3 +159,8 @@ TimeoutError: OpenAI timed out waiting for response
 > NODE_ENV=development esno ./src/index.ts
 
 Server is running on port 3002
+
+> chatgpt-web-service@1.0.0 start /Users/wuzm/WorkCode/chatgpt-person/service
+> NODE_ENV=development esno ./src/index.ts
+
+Server is running on port 3002
