@@ -31,7 +31,7 @@ import {
   PromptStore,
   UserInfo,
 } from '@/components/common'
-// import { router } from '@/router'
+import { router } from '@/router'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
@@ -151,9 +151,9 @@ const userWantVip = () => {
   payShow.value = true
 }
 
-// const moreFunctions = () => {
-// router.push({ name: 'morev' })
-// }
+const moreFunctions = () => {
+  router.push({ name: 'morev' })
+}
 </script>
 
 <template>
@@ -175,11 +175,11 @@ const userWantVip = () => {
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
-        <!--        <div class="p-1">
+        <div class="p-1">
           <NButton block @click="moreFunctions">
             更多功能
           </NButton>
-        </div> -->
+        </div>
         <div class="p-1">
           <NButton block @click="show = true">
             {{ $t('store.siderButton') }}
