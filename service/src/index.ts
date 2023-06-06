@@ -65,7 +65,7 @@ app.all('*', (_, res, next) => {
 function checkUserIsOutDate(endday: any) {
   if (!endday)
     return true
-  return moment(endday).unix() <= Date.now()
+  return moment(endday).valueOf() <= Date.now()
 }
 
 async function chatCheck(req, res, prompt, extraPrice = 0) {
@@ -784,7 +784,7 @@ router.post('/user/payurl', async (req, res) => {
     const orderId = uuidv4().slice(0, 8) + uuidv4().slice(-8)
     const openid = user.openid
     await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
-    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId)
+    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId, productInfo.nowprice)
     const orderPrice = Math.floor(productInfo.nowprice * 100)
     const { prepay_id, code_url } = await wechatApi.payApi.unifiedOrder({
       out_trade_no: orderId,
@@ -839,7 +839,7 @@ router.post('/user/get_pay_params', async (req, res) => {
       throw new Error('预支付交易错误')
 
     await SqlOperate.deleteAllUserOrderUncomplete(openid, username)
-    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId)
+    await SqlOperate.createAnOrderInfo(username, openid, productid, orderId, productInfo.nowprice)
 
     const prepay_id = result.prepay_id
     const paramData = wechatApi.getWechatPayParam(prepay_id)

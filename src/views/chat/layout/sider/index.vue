@@ -134,6 +134,10 @@ const showChongZhi = () => {
   payShow.value = true
 }
 
+// const contactServer = () => {
+//   window.alert('请联系微信')
+// }
+
 const createOrder = (productid: string) => {
   payId.value = productid
   payShow.value = false
@@ -180,14 +184,23 @@ const moreFunctions = () => {
             更多功能
           </NButton>
         </div>
+<<<<<<< HEAD
         <div class="p-1">
+=======
+        <!--        <div class="p-1">
+>>>>>>> 08fc36c82dc0c45a186aec2ec5cca4b4d82e3fb7
           <NButton block @click="show = true">
             {{ $t('store.siderButton') }}
           </NButton>
-        </div>
+        </div> -->
         <div class="p-1">
           <NButton block @click="aiPPTShow = true">
             AI制作ppt
+          </NButton>
+        </div>
+        <div class="p-1">
+          <NButton block @click="contactServer">
+            联系客服
           </NButton>
         </div>
         <div class="p-1">

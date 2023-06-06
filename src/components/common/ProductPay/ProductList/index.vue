@@ -29,6 +29,7 @@ interface OrderProductInfo {
   description: string
   reserve: string
   needvip: number
+  porder: number
 }
 
 const emits = defineEmits < Emit > ()
@@ -50,10 +51,14 @@ watch(
     vipList.value = productList.value?.filter((value) => {
       return (value.name === '周会员') || (value.name === '月会员')
 || (value.name === '季会员') || (value.name === '年会员')
+    }).sort((item1, item2) => {
+      return item1.porder - item2.porder
     })
     wordList.value = productList.value?.filter((value) => {
       return !((value.name === '周会员') || (value.name === '月会员')
 || (value.name === '季会员') || (value.name === '年会员'))
+    }).sort((item1, item2) => {
+      return item1.porder - item2.porder
     })
   }, {
     deep: true,
@@ -102,7 +107,7 @@ requestProductList()
         <NDivider>充值会员</NDivider>
         <NGrid cols="1 s:2 m:3 l:3 xl:3 2xl:3" responsive="screen" x-gap="15" y-gap="15">
           <NGridItem v-for="(item, index) of vipList" :key="index">
-            <NBadge value="推荐">
+            <NBadge :value="item.reserve">
               <NCard hoverable embedded>
                 <div class="title">
                   {{ item?.name }}
@@ -141,7 +146,7 @@ requestProductList()
         </div>
         <NGrid cols="1 s:2 m:3 l:3 xl:3 2xl:3" responsive="screen" x-gap="15" y-gap="15">
           <NGridItem v-for="(item, index) of wordList" :key="index">
-            <NBadge value="荐">
+            <NBadge :value="item.reserve">
               <NCard hoverable embedded>
                 <div class="title">
                   {{ item?.name }}
@@ -202,6 +207,7 @@ margin-bottom: 10px;
 
 .des-content {
 max-width: 200px;
+white-space: pre-wrap;
 }
 
 .hint-content {

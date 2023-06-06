@@ -21,8 +21,9 @@ interface OrderProductInfo {
   originprice: number
   nowprice: number
   description: string
-  reserve?: string
+  reserve: string
   needvip: number
+  porder: number
 }
 
 const showModal = ref(false)
@@ -37,6 +38,8 @@ const formParams = reactive({
   nowprice: 0,
   description: '',
   needvip: 0,
+  reserve: '',
+  porder: 0,
 })
 const rules: FormRules = {
   name: {
@@ -67,6 +70,17 @@ const rules: FormRules = {
     trigger: ['blur', 'input'],
     message: '给点描述吧',
   },
+  reserve: {
+    required: false,
+    trigger: ['blur', 'input'],
+    message: '可以不输入',
+  },
+  porder: {
+    type: 'number',
+    required: false,
+    trigger: ['blur', 'input'],
+    message: '可以不输入',
+  },
 }
 
 interface VipOption {
@@ -78,6 +92,8 @@ const productlist = ref<OrderProductInfo[]>([])
 const productlistShow = computed(() => {
   return productlist.value.map((item) => {
     return { ...item, needStr: item.needvip > 0 ? '需要' : '不需要' }
+  }).sort((item1, item2) => {
+    return item1.porder - item2.porder
   })
 })
 
@@ -154,24 +170,18 @@ function confirmForm(e: { preventDefault: () => void }) {
       return
 
     formBtnLoading.value = true
-    const params = {
-      name: formParams.name,
-      wordnum: formParams.wordnum,
-      originprice: formParams.originprice,
-      nowprice: formParams.nowprice,
-      description: formParams.description,
-      needvip: formParams.needvip,
-    }
     try {
-      const { message: pid } = await reqAddProduct(params)
+      const { message: pid } = await reqAddProduct(formParams)
       const id = parseInt(pid as string)
-      productlist.value.unshift({ ...params, id })
+      productlist.value.unshift({ ...formParams, id })
       formParams.name = ''
       formParams.wordnum = 0
       formParams.originprice = 0
       formParams.nowprice = 0
       formParams.description = ''
       formParams.needvip = 0
+      formParams.reserve = ''
+      formParams.porder = 0
       showModal.value = false
       message.success('添加成功')
     }
@@ -198,21 +208,11 @@ gerProductList()
         新建套餐
       </NButton>
       <NModal v-model:show="showModal" :show-icon="false" preset="dialog" title="新建套餐">
-        <NForm
-          ref="formRef"
-          :model="formParams"
-          :rules="rules"
-          label-placement="left"
-          :label-width="80"
-          class="py-4"
-        >
+        <NForm ref="formRef" :model="formParams" :rules="rules" label-placement="left" :label-width="80" class="py-4">
           <NFormItem label="套餐名称" path="name">
             <NAutoComplete
-              v-model:value="formParams.name"
-              :options="nameOptions"
-              :get-show="nameGetShow"
-              placeholder="套餐名称"
-              @blur="checkNeedVip"
+              v-model:value="formParams.name" :options="nameOptions" :get-show="nameGetShow"
+              placeholder="套餐名称" @blur="checkNeedVip"
             />
           </NFormItem>
           <NFormItem label="字数" path="wordnum">
@@ -232,6 +232,9 @@ gerProductList()
               </template>
             </NInputNumber>
           </NFormItem>
+          <NFormItem label="排序" path="porder" type="number">
+            <NInputNumber v-model:value="formParams.porder" placeholder="越低越靠前" style="width: 100%;" />
+          </NFormItem>
           <NFormItem label="描述" path="description">
             <NInput v-model:value="formParams.description" type="textarea" placeholder="描述" />
           </NFormItem>
@@ -244,6 +247,9 @@ gerProductList()
                 此套餐无需开通会员
               </template>
             </NSwitch>
+          </NFormItem>
+          <NFormItem label="推荐" path="reserve">
+            <NInput v-model:value="formParams.reserve" type="text" placeholder="会显示在卡片右上角" />
           </NFormItem>
         </NForm>
 
