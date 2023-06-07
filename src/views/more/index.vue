@@ -6,6 +6,9 @@ import {
 } from 'naive-ui'
 
 import { useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
+// import type { MenuOption } from 'naive-ui/lib/menu'
+import type { MenuOption } from 'naive-ui'
 import { useUsingContext } from '../chat/hooks/useUsingContext'
 import HeaderComponent from '../chat/components/Header/index.vue'
 import { Message } from '../chat/components'
@@ -16,7 +19,7 @@ import MenuCofig from './menu/config'
 
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { HoverButton, SvgIcon } from '@/components/common'
-import { useChatStore } from '@/store'
+import { useChatStore, usePromptStore } from '@/store'
 import { askFileQuestion, fetchChatAPIProcess, getPromotImage } from '@/api'
 import { t } from '@/locales'
 import { getQAFileName } from '@/store/modules/chat/helper'
@@ -438,6 +441,69 @@ function handleStop() {
     loading.value = false
   }
 }
+/// ////提词器相关
+
+const promptStore = usePromptStore()
+// 使用storeToRefs，保证store修改后，联想部分能够重新渲染
+const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
+// const promptList = ref<any>(promptStore.promptList)
+// // 移动端自适应相关
+// const renderTemplate = () => {
+//   const [keyLimit, valueLimit] = isMobile.value ? [10, 30] : [15, 50]
+
+//   return promptList.value.map((item: { key: string; value: string }) => {
+//     return {
+//       renderKey: item.key.length <= keyLimit ? item.key : `${item.key.substring(0, keyLimit)}...`,
+//       renderValue: item.value.length <= valueLimit ? item.value : `${item.value.substring(0, valueLimit)}...`,
+//       key: item.key,
+//       value: item.value,
+//     }
+//   })
+// }
+
+// const dataSource = computed(() => {
+//   const data = renderTemplate()
+//   const value = searchValue.value
+//   if (value && value !== '') {
+//     return data.filter((item: DataProps) => {
+//       return item.renderKey.includes(value) || item.renderValue.includes(value)
+//     })
+//   }
+//   return data
+// })
+// 可优化部分
+// 搜索选项计算，这里使用value作为索引项，所以当出现重复value时渲染异常(多项同时出现选中效果)
+// 理想状态下其实应该是key作为索引项,但官方的renderOption会出现问题，所以就需要value反renderLabel实现
+const searchOptions = computed(() => {
+  if (prompt.value.startsWith('/')) {
+    return promptTemplate.value.filter((item: { key: string }) => item.key.toLowerCase().includes(prompt.value.substring(1).toLowerCase())).map((obj: { value: any }) => {
+      return {
+        label: obj.value,
+        value: obj.value,
+      }
+    })
+  }
+  else {
+    return []
+  }
+})
+// value反渲染key
+const renderOption = (option: { label: string }) => {
+  for (const i of promptTemplate.value) {
+    if (i.value === option.label)
+      return [i.key]
+  }
+  return []
+}
+/// //左侧菜单点击事件
+function handleUpdateValue(key: string, item: MenuOption) {
+  let menuValue = JSON.stringify(item.label)
+  menuValue = menuValue.substring(1, menuValue.length - 1)
+  const filterArr = promptTemplate.value.filter((item1: { key: string; value: string }) => {
+    return item1.key.includes(menuValue) || item1.value.includes(menuValue)
+  })
+  prompt.value = filterArr.length > 0 ? filterArr[0].value : '没有找到合适的提示语'
+}
 </script>
 
 <template>
@@ -467,6 +533,7 @@ function handleStop() {
             :collapsed-width="64"
             :collapsed-icon-size="22"
             :options="menuOptions"
+            @update:value="handleUpdateValue"
           />
         </NLayoutSider>
 
@@ -551,7 +618,7 @@ function handleStop() {
                   <SvgIcon icon="ri:chat-history-line" />
                 </span>
               </HoverButton>
-              <NAutoComplete>
+              <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
                 <template #default="{ handleInput, handleBlur, handleFocus }">
                   <NInput
                     ref="inputRef"
