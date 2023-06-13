@@ -3,8 +3,8 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import express from 'express'
-import midjourney from 'midjourney-client'
 import xmlparser from 'express-xml-bodyparser'
+import Replicate from 'replicate'
 import { v4 as uuidv4 } from 'uuid'
 import moment from 'moment'
 import type { RequestProps } from './types'
@@ -510,7 +510,17 @@ router.post('/chat/image', async (req, res) => {
     }
     const { prompot } = req.body as { prompot: string }
     await chatCheck(req, res, prompot)
-    const url = await midjourney(`mdjrny-v4 style${prompot}`)
+    const url = await replicate.run(
+      'stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
+      {
+        input: {
+          prompt: prompot,
+          scheduler: 'K_EULER',
+          image_dimensions: '512x512',
+        },
+      },
+    )
+    // const url = await midjourney(`mdjrny-v4 style${prompot}`)
     res.send({ status: 'Success', message: '', data: JSON.stringify({ content: `![image 图片](${url})` }) })
   }
   catch (error) {
