@@ -101,7 +101,7 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
   res.setHeader('Content-type', 'application/octet-stream')
 
   try {
-    const { prompt, options = {}, systemMessage, temperature, top_p } = req.body as RequestProps
+    const { prompt, options = {}, systemMessage, temperature, top_p, context } = req.body as RequestProps
     await chatCheck(req, res, prompt)
 
     let firstChunk = true
@@ -118,6 +118,7 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
       systemMessage,
       temperature,
       top_p,
+      context,
     })
     if (chatString && chatString.text)
       await chatCheck(req, res, chatString.text)

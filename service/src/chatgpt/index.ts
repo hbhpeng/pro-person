@@ -138,13 +138,16 @@ initChatGPTApi()
 // })()
 
 async function chatReplyProcess(options: RequestOptions) {
-  const { message, lastContext, process, systemMessage, temperature, top_p } = options
+  const { message, lastContext, process, systemMessage, temperature, top_p, context } = options
   try {
     let options: SendMessageOptions = { timeoutMs }
 
     if (apiModel === 'ChatGPTAPI') {
       if (isNotEmptyString(systemMessage))
         options.systemMessage = systemMessage
+
+      if (context)
+        options.systemMessage = buildMessages(context)
       options.completionParams = { model, temperature, top_p }
     }
 
@@ -262,6 +265,25 @@ function setupProxy(options: SetProxyOptions) {
       return fetch(url, { ...options })
     }
   }
+}
+
+function buildMessages(option: any) {
+  if (!option || !Array.isArray(option))
+    return ''
+  const prompt = option.reduce((prompt2, message) => {
+    switch (message.role) {
+      case 'system':
+        return prompt2.concat([`Instructions:
+${message.content}`])
+      case 'user':
+        return prompt2.concat([`User:
+${message.content}`])
+      default:
+        return prompt2.concat([`ChatGPT:
+${message.content}`])
+    }
+  }, []).join('\n\n')
+  return prompt
 }
 
 function currentModel(): ApiModel {

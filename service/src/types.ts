@@ -7,6 +7,7 @@ export interface RequestProps {
   temperature?: number
   top_p?: number
   password?: string
+  context?: any
 }
 
 export interface ChatContext {
