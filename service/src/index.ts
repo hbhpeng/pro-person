@@ -51,6 +51,14 @@ if (!process.env.YUAN_YUAN_IS_FENXIAO) {
 }
 // process.env.wechatToken = '68_xF9DPvXJa0Oj6w1Nq4EWNdO6X4M8QfO0AEEoKvzs_nuCIuE7GtZXOHJO5pKk2m4xhdYY_Qn-iio8Cbg1ZUlI9URIjLMOVJhO5oS0s4EQHeana021WEGt1IST_wMTTXaAEAYYC'
 
+SqlOperate.initApiKeys().then(() => {
+  changeapikey(SqlOperate.getNextOpenAiKey())
+})
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+})
+
 const app = express()
 export const router = express.Router()
 const isExpire = false

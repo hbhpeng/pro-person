@@ -1044,7 +1044,7 @@ export async function validateUser(username: string, password: string) {
 
 // export function handleSqlError()
 let apikey_index = 0
-async function initApiKeys() {
+export async function initApiKeys() {
   try {
     totoal_apikeys.splice(0)
     const tmpApikeys = await databaseApiKeys()
@@ -1076,4 +1076,4 @@ export function getNextOpenAiKey() {
   }
 }
 
-initApiKeys()
+// initApiKeys()
