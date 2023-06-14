@@ -6,7 +6,7 @@ import {
 } from 'naive-ui'
 
 import { useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
+// import { storeToRefs } from 'pinia'
 // import type { MenuOption } from 'naive-ui/lib/menu'
 import type { MenuOption } from 'naive-ui'
 import { useUsingContext } from '../chat/hooks/useUsingContext'
@@ -15,15 +15,15 @@ import { Message } from '../chat/components'
 import { useChat } from '../chat/hooks/useChat'
 import { useScroll } from '../chat/hooks/useScroll'
 import List from '../chat/layout/sider/List.vue'
+import PromptRecommend from '../../assets/prompt_custom.json'
 import MenuCofig from './menu/config'
 
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { HoverButton, SvgIcon } from '@/components/common'
-import { useChatStore, usePromptStore } from '@/store'
+import { useChatStore } from '@/store'
 import { askFileQuestion, fetchChatAPIProcess, getPromotImage } from '@/api'
 import { t } from '@/locales'
 import { getQAFileName } from '@/store/modules/chat/helper'
-
 // import { router } from '@/router'
 
 const { isMobile } = useBasicLayout()
@@ -443,9 +443,28 @@ function handleStop() {
 }
 /// ////提词器相关
 
-const promptStore = usePromptStore()
+// const promptStore = usePromptStore()
 // 使用storeToRefs，保证store修改后，联想部分能够重新渲染
-const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
+// const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
+const promptTemplate = PromptRecommend
+
+menuOptions.forEach((item: MenuOption, i: number) => {
+  item.children?.forEach((item: MenuOption, j: number) => {
+    const promp = promptTemplate[i][j]
+    item.act = promp.act
+    item.prompt = promp.prompt
+  })
+})
+// for (let i = 0; i < menuOptions.length; i++) {
+//   const element: MenuOption = menuOptions[i]
+//   const child: MenuOption[] | undefined = element?.children
+//   for (let j = 0; j < child?child.length:0; j++) {
+//     const element: MenuOption = child.children[j]
+//     const promp = promptTemplate[i][j]
+//     element.act = promp.act
+//     element.prompt = promp.prompt
+//   }
+// }
 // const promptList = ref<any>(promptStore.promptList)
 // // 移动端自适应相关
 // const renderTemplate = () => {
@@ -475,6 +494,7 @@ const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
 // 搜索选项计算，这里使用value作为索引项，所以当出现重复value时渲染异常(多项同时出现选中效果)
 // 理想状态下其实应该是key作为索引项,但官方的renderOption会出现问题，所以就需要value反renderLabel实现
 const searchOptions = computed(() => {
+  /*
   if (prompt.value.startsWith('/')) {
     return promptTemplate.value.filter((item: { key: string }) => item.key.toLowerCase().includes(prompt.value.substring(1).toLowerCase())).map((obj: { value: any }) => {
       return {
@@ -483,26 +503,28 @@ const searchOptions = computed(() => {
       }
     })
   }
-  else {
-    return []
-  }
+  else { */
+  return []
+  // }
 })
 // value反渲染key
 const renderOption = (option: { label: string }) => {
-  for (const i of promptTemplate.value) {
-    if (i.value === option.label)
-      return [i.key]
-  }
+  // for (const i of promptTemplate.value) {
+  //   if (i.value === option.label)
+  //     return [i.key]
+  // }
   return []
 }
 /// //左侧菜单点击事件
 function handleUpdateValue(key: string, item: MenuOption) {
-  let menuValue = JSON.stringify(item.label)
-  menuValue = menuValue.substring(1, menuValue.length - 1)
-  const filterArr = promptTemplate.value.filter((item1: { key: string; value: string }) => {
-    return item1.key.includes(menuValue) || item1.value.includes(menuValue)
-  })
-  prompt.value = filterArr.length > 0 ? filterArr[0].value : '没有找到合适的提示语'
+  // const index = menuOptions.indexOf(item)
+  // let menuValue = JSON.stringify(item.label)
+  // menuValue = menuValue.substring(1, menuValue.length - 1)
+  // const filterArr = promptTemplate.value.filter((item1: { key: string; value: string }) => {
+  //   return item1.key.includes(menuValue) || item1.value.includes(menuValue)
+  // })
+  // prompt.value = filterArr.length > 0 ? filterArr[0].value : '没有找到合适的提示语'
+  prompt.value = item.prompt as string
 }
 </script>
 
