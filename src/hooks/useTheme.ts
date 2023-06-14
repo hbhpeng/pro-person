@@ -48,10 +48,10 @@ export function useTheme() {
         barColor: '#6AA1E7',
       },
       Menu: {
-        itemTextColor: '#BBBBBB',
-        itemIconColor: '#BBBBBB',
-        arrowColor: '#BBBBBB',
-        itemIconColorCollapsed: '#BBBBBB',
+        itemTextColor: '#000000',
+        itemIconColor: '#000000',
+        arrowColor: '#000000',
+        itemIconColorCollapsed: '#000000',
       },
     }
   })
