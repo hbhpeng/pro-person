@@ -2,13 +2,13 @@
 import { computed, ref } from 'vue'
 import {
   NAutoComplete, NButton, NInput, NLayout, NLayoutFooter, NLayoutHeader,
-  NLayoutSider, NMenu,
+  NLayoutSider, NMenu, useMessage,
 } from 'naive-ui'
+import html2canvas from 'html2canvas'
 
 // import { storeToRefs } from 'pinia'
 // import type { MenuOption } from 'naive-ui/lib/menu'
 import type { MenuOption } from 'naive-ui'
-import { useUsingContext } from '../chat/hooks/useUsingContext'
 import HeaderComponent from '../chat/components/Header/index.vue'
 import { Message } from '../chat/components'
 import { useScroll } from '../chat/hooks/useScroll'
@@ -24,8 +24,9 @@ import { t } from '@/locales'
 
 const { isMobile } = useBasicLayout()
 const inverted = ref(false)
-const { usingContext, toggleUsingContext } = useUsingContext()
-function handleExport() {}
+// const { usingContext, toggleUsingContext } = useUsingContext()
+const usingContext = ref(false)
+const ms = useMessage()
 const footerClass = computed(() => {
   let classes = ['p-4']
   if (isMobile.value)
@@ -483,6 +484,63 @@ function handleUpdateValue(key: string, item: MenuOption) {
   })
 }
 
+function handleClear() {
+  if (loading.value)
+    return
+
+  dialog.warning({
+    title: t('chat.clearChat'),
+    content: t('chat.clearChatConfirm'),
+    positiveText: t('common.yes'),
+    negativeText: t('common.no'),
+    onPositiveClick: () => {
+      chatStore.clearChatByLabel(pageTitle.value)
+    },
+  })
+}
+
+function handleExport() {
+  if (loading.value)
+    return
+
+  const d = dialog.warning({
+    title: t('chat.exportImage'),
+    content: t('chat.exportImageConfirm'),
+    positiveText: t('common.yes'),
+    negativeText: t('common.no'),
+    onPositiveClick: async () => {
+      try {
+        d.loading = true
+        const ele = document.getElementById('image-wrapper')
+        const canvas = await html2canvas(ele as HTMLDivElement, {
+          useCORS: true,
+        })
+        const imgUrl = canvas.toDataURL('image/png')
+        const tempLink = document.createElement('a')
+        tempLink.style.display = 'none'
+        tempLink.href = imgUrl
+        tempLink.setAttribute('download', 'chat-shot.png')
+        if (typeof tempLink.download === 'undefined')
+          tempLink.setAttribute('target', '_blank')
+
+        document.body.appendChild(tempLink)
+        tempLink.click()
+        document.body.removeChild(tempLink)
+        window.URL.revokeObjectURL(imgUrl)
+        d.loading = false
+        ms.success(t('chat.exportSuccess'))
+        Promise.resolve()
+      }
+      catch (error: any) {
+        ms.error(t('chat.exportFailed'))
+      }
+      finally {
+        d.loading = false
+      }
+    },
+  })
+}
+
 onMounted(() => {
   scrollToBottom()
 })
@@ -573,7 +631,7 @@ onUnmounted(() => {
       <footer :class="footerClass">
         <div class="w-full max-w-screen-xl m-auto">
           <div class="flex items-center justify-between space-x-2">
-            <HoverButton tooltip="清空">
+            <HoverButton tooltip="清空" @click="handleClear">
               <span class="text-xl text-[#4f555e] dark:text-white">
                 <SvgIcon icon="ri:delete-bin-line" />
               </span>
@@ -581,11 +639,6 @@ onUnmounted(() => {
             <HoverButton v-if="!isMobile" tooltip="导出" @click="handleExport">
               <span class="text-xl text-[#4f555e] dark:text-white">
                 <SvgIcon icon="ri:download-2-line" />
-              </span>
-            </HoverButton>
-            <HoverButton v-if="!isMobile" @click="toggleUsingContext">
-              <span class="text-xl" :class="{ 'text-[#6aa1e7]': usingContext, 'text-[#a8071a]': !usingContext }">
-                <SvgIcon icon="ri:chat-history-line" />
               </span>
             </HoverButton>
             <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
