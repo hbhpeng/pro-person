@@ -24,6 +24,12 @@ declare namespace Chat {
 		chat: { uuid: number; data: Chat[] }[]
 	}
 
+	interface RoleChatState {
+		active: string | null
+		history: History[]
+		chat: { label: string; data: Chat[] }[]
+	}
+
 	interface ConversationRequest {
 		conversationId?: string
 		parentMessageId?: string

@@ -2,28 +2,24 @@
 import { computed, ref } from 'vue'
 import {
   NAutoComplete, NButton, NInput, NLayout, NLayoutFooter, NLayoutHeader,
-  NLayoutSider, NMenu, NSpace,
+  NLayoutSider, NMenu,
 } from 'naive-ui'
 
-import { useRoute } from 'vue-router'
 // import { storeToRefs } from 'pinia'
 // import type { MenuOption } from 'naive-ui/lib/menu'
 import type { MenuOption } from 'naive-ui'
 import { useUsingContext } from '../chat/hooks/useUsingContext'
 import HeaderComponent from '../chat/components/Header/index.vue'
 import { Message } from '../chat/components'
-import { useChat } from '../chat/hooks/useChat'
 import { useScroll } from '../chat/hooks/useScroll'
-import List from '../chat/layout/sider/List.vue'
 import PromptRecommend from '../../assets/prompt_custom.json'
 import MenuCofig from './menu/config'
 
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { HoverButton, SvgIcon } from '@/components/common'
-import { useChatStore } from '@/store'
-import { askFileQuestion, fetchChatAPIProcess, getPromotImage } from '@/api'
+import { useRoleChatStore } from '@/store/modules/chat/roleStore'
+import { fetchChatAPIProcess, getPromotImage } from '@/api'
 import { t } from '@/locales'
-import { getQAFileName } from '@/store/modules/chat/helper'
 // import { router } from '@/router'
 
 const { isMobile } = useBasicLayout()
@@ -39,19 +35,16 @@ const footerClass = computed(() => {
 const menuOptions = MenuCofig
 
 /// ///////Message
-const chatStore = useChatStore()
-const route = useRoute()
+const chatStore = useRoleChatStore()
 let controller = new AbortController()
 const loading = ref<boolean>(false)
 const dialog = useDialog()
 
 const openLongReply = import.meta.env.VITE_GLOB_OPEN_LONG_REPLY === 'true'
 
-const { updateChat, updateChatSome } = useChat()
+const pageTitle = ref(chatStore.active as string)
 
-const { uuid } = route.params as { uuid: string; fileType: string }
-
-const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
+const dataSources = computed(() => chatStore.getChatByLabel(pageTitle.value))
 
 async function onRegenerate(index: number) {
   if (loading.value)
@@ -70,8 +63,8 @@ async function onRegenerate(index: number) {
 
   loading.value = true
 
-  updateChat(
-    +uuid,
+  chatStore.updateChatByLabel(
+    pageTitle.value,
     index,
     {
       dateTime: new Date().toLocaleString(),
@@ -101,8 +94,8 @@ async function onRegenerate(index: number) {
             chunk = responseText.substring(lastIndex)
           try {
             const data = JSON.parse(chunk)
-            updateChat(
-              +uuid,
+            chatStore.updateChatByLabel(
+              pageTitle.value,
               index,
               {
                 dateTime: new Date().toLocaleString(),
@@ -127,14 +120,14 @@ async function onRegenerate(index: number) {
           }
         },
       })
-      updateChatSome(+uuid, index, { loading: false })
+      chatStore.updateChatSomeByLabel(pageTitle.value, index, { loading: false })
     }
     await fetchChatAPIOnce()
   }
   catch (error: any) {
     if (error.message === 'canceled') {
-      updateChatSome(
-        +uuid,
+      chatStore.updateChatSomeByLabel(
+        pageTitle.value,
         index,
         {
           loading: false,
@@ -145,8 +138,8 @@ async function onRegenerate(index: number) {
 
     const errorMessage = error?.message ?? t('common.wrong')
 
-    updateChat(
-      +uuid,
+    chatStore.updateChatByLabel(
+      pageTitle.value,
       index,
       {
         dateTime: new Date().toLocaleString(),
@@ -174,29 +167,23 @@ function handleDelete(index: number) {
     positiveText: t('common.yes'),
     negativeText: t('common.no'),
     onPositiveClick: () => {
-      chatStore.deleteChatByUuid(+uuid, index)
+      chatStore.deleteChatByLabel(pageTitle.value, index)
     },
   })
 }
 
 /// /////footer event
-const ms = useMessage()
-const { addChat, getChatByUuidAndIndex } = useChat()
+// const ms = useMessage()
 const conversationList = computed(() => dataSources.value.filter(item => (!item.inversion && !!item.conversationOptions)))
-const { scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
+const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 
 const prompt = ref<string>('')
-const isFile = ref(false)
 
 const buttonDisabled = computed(() => {
   return loading.value || !prompt.value || prompt.value.trim() === ''
 })
 
 function handleSubmit() {
-  if (isFile.value && !getQAFileName()) {
-    ms.error('请先上传文件')
-    return
-  }
   onConversation()
 }
 
@@ -211,8 +198,8 @@ async function onConversation() {
 
   controller = new AbortController()
 
-  addChat(
-    +uuid,
+  chatStore.addChatByLabel(
+    pageTitle.value,
     {
       dateTime: new Date().toLocaleString(),
       text: message,
@@ -233,8 +220,8 @@ async function onConversation() {
   if (lastContext && usingContext.value)
     options = { ...lastContext }
 
-  addChat(
-    +uuid,
+  chatStore.addChatByLabel(
+    pageTitle.value,
     {
       dateTime: new Date().toLocaleString(),
       text: '',
@@ -247,25 +234,6 @@ async function onConversation() {
   )
   scrollToBottom()
 
-  async function checkIfAskFile() {
-    if (isFile.value) {
-      const { data } = await askFileQuestion(message, controller.signal)
-      const content = JSON.parse(data as any).message
-      updateChatSome(
-        +uuid,
-        dataSources.value.length - 1, {
-          dateTime: new Date().toLocaleString(),
-          text: content,
-          inversion: false,
-          error: false,
-          loading: false,
-        },
-      )
-      return true
-    }
-    return false
-  }
-
   // 是否要求发送图片
   async function checkIfImage() {
     if (message.indexOf('[img]') === 0) {
@@ -273,8 +241,8 @@ async function onConversation() {
         data,
       } = await getPromotImage(message.substring(5, message.length), controller.signal)
       const imageContent: string = JSON.parse(data as string).content
-      updateChatSome(
-        +uuid,
+      chatStore.updateChatSomeByLabel(
+        pageTitle.value,
         dataSources.value.length - 1, {
           dateTime: new Date().toLocaleString(),
           text: imageContent,
@@ -289,9 +257,6 @@ async function onConversation() {
   }
 
   try {
-    // 问文件
-    if (await checkIfAskFile())
-      return
     // 问图片
     if (await checkIfImage())
       return
@@ -312,8 +277,8 @@ async function onConversation() {
             chunk = responseText.substring(lastIndex)
           try {
             const data = JSON.parse(chunk)
-            updateChat(
-              +uuid,
+            chatStore.updateChatByLabel(
+              pageTitle.value,
               dataSources.value.length - 1,
               {
                 dateTime: new Date().toLocaleString(),
@@ -340,7 +305,7 @@ async function onConversation() {
           }
         },
       })
-      updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
+      chatStore.updateChatSomeByLabel(pageTitle.value, dataSources.value.length - 1, { loading: false })
     }
 
     await fetchChatAPIOnce()
@@ -349,8 +314,8 @@ async function onConversation() {
     const errorMessage = error?.message ?? t('common.wrong')
 
     if (error.message === 'canceled') {
-      updateChatSome(
-        +uuid,
+      chatStore.updateChatSomeByLabel(
+        pageTitle.value,
         dataSources.value.length - 1,
         {
           loading: false,
@@ -360,11 +325,11 @@ async function onConversation() {
       return
     }
 
-    const currentChat = getChatByUuidAndIndex(+uuid, dataSources.value.length - 1)
+    const currentChat = chatStore.getChatByLabelAndIndex(pageTitle.value, dataSources.value.length - 1)
 
     if (currentChat?.text && currentChat.text !== '') {
-      updateChatSome(
-        +uuid,
+      chatStore.updateChatSomeByLabel(
+        pageTitle.value,
         dataSources.value.length - 1,
         {
           text: `${currentChat.text}\n[${errorMessage}]`,
@@ -375,8 +340,8 @@ async function onConversation() {
       return
     }
 
-    updateChat(
-      +uuid,
+    chatStore.updateChatByLabel(
+      pageTitle.value,
       dataSources.value.length - 1,
       {
         dateTime: new Date().toLocaleString(),
@@ -419,21 +384,6 @@ function handleEnter(event: KeyboardEvent) {
 }
 
 /// ///main标签 event
-
-const receiveMessage = (content: string) => {
-  addChat(
-    +uuid,
-    {
-      dateTime: new Date().toLocaleString(),
-      text: content,
-      inversion: false,
-      error: false,
-      conversationOptions: null,
-      requestOptions: { prompt: content, options: null },
-    },
-  )
-  scrollToBottom()
-}
 
 function handleStop() {
   if (loading.value) {
@@ -525,41 +475,58 @@ function handleUpdateValue(key: string, item: MenuOption) {
   // })
   // prompt.value = filterArr.length > 0 ? filterArr[0].value : '没有找到合适的提示语'
   prompt.value = item.prompt as string
+  pageTitle.value = item.label as string
+  chatStore.addHistory({
+    title: pageTitle.value,
+    uuid: Date.now(),
+    isEdit: false,
+  })
 }
+
+onMounted(() => {
+  scrollToBottom()
+})
+
+onUnmounted(() => {
+  if (loading.value)
+    controller.abort()
+})
 </script>
 
 <template>
-  <div class="flex flex-col justify-between w-full h-full">
+  <div class="flex flex-col w-full h-full">
     <header>
       <NLayoutHeader :inverted="inverted" bordered>
         <HeaderComponent
-          v-if="isMobile ? true : true"
+          v-if="isMobile"
           :using-context="usingContext"
+          :is-showback="true"
+          :page-title="pageTitle"
           @export="handleExport"
           @toggle-using-context="toggleUsingContext"
         />
       </NLayoutHeader>
     </header>
-    <NSpace justify="space-between">
-      <NLayout has-sider>
-        <NLayoutSider
-          bordered
-          collapse-mode="width"
-          :collapsed-width="64"
-          :width="240"
-          show-trigger
+    <NLayout has-sider>
+      <NLayoutSider
+        bordered
+        collapse-mode="width"
+        :collapsed-width="64"
+        :width="240"
+        show-trigger
+        :inverted="inverted"
+      >
+        <NMenu
           :inverted="inverted"
-        >
-          <NMenu
-            :inverted="inverted"
-            :collapsed-width="64"
-            :collapsed-icon-size="22"
-            :options="menuOptions"
-            @update:value="handleUpdateValue"
-          />
-        </NLayoutSider>
+          :collapsed-width="64"
+          :collapsed-icon-size="22"
+          :options="menuOptions"
+          @update:value="handleUpdateValue"
+        />
+      </NLayoutSider>
 
-        <NLayout>
+      <NLayout>
+        <div class="flex flex-col w-full h-full">
           <main class="flex-1 overflow-hidden">
             <div id="scrollRef" ref="scrollRef" class="h-full overflow-hidden overflow-y-auto">
               <div
@@ -567,10 +534,7 @@ function handleUpdateValue(key: string, item: MenuOption) {
                 class="w-full max-w-screen-xl m-auto dark:bg-[#101014]"
                 :class="[isMobile ? 'p-2' : 'p-4']"
               >
-                <template v-if="isFile">
-                  <Upload @receive-message="receiveMessage" />
-                </template>
-                <template v-if="!dataSources.length && !isFile">
+                <template v-if="!dataSources.length">
                   <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
                     <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
                     <span>Aha~</span>
@@ -602,71 +566,54 @@ function handleUpdateValue(key: string, item: MenuOption) {
               </div>
             </div>
           </main>
-        </NLayout>
+        </div>
       </NLayout>
-      <NLayout has-sider sider-placement="right" bordered>
-        <NLayoutSider
-          bordered
-          show-trigger
-          collapse-mode="width"
-          :collapsed-width="30"
-          :width="200"
-          :native-scrollbar="false"
-          style="max-height: 320px"
-        >
-          <div class="flex-1 min-h-0 pb-4 overflow-hidden">
-            <List />
+    </NLayout>
+    <NLayoutFooter :inverted="inverted" bordered>
+      <footer :class="footerClass">
+        <div class="w-full max-w-screen-xl m-auto">
+          <div class="flex items-center justify-between space-x-2">
+            <HoverButton tooltip="清空">
+              <span class="text-xl text-[#4f555e] dark:text-white">
+                <SvgIcon icon="ri:delete-bin-line" />
+              </span>
+            </HoverButton>
+            <HoverButton v-if="!isMobile" tooltip="导出" @click="handleExport">
+              <span class="text-xl text-[#4f555e] dark:text-white">
+                <SvgIcon icon="ri:download-2-line" />
+              </span>
+            </HoverButton>
+            <HoverButton v-if="!isMobile" @click="toggleUsingContext">
+              <span class="text-xl" :class="{ 'text-[#6aa1e7]': usingContext, 'text-[#a8071a]': !usingContext }">
+                <SvgIcon icon="ri:chat-history-line" />
+              </span>
+            </HoverButton>
+            <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
+              <template #default="{ handleInput, handleBlur, handleFocus }">
+                <NInput
+                  ref="inputRef"
+                  v-model:value="prompt"
+                  type="textarea"
+                  :placeholder="placeholder"
+                  :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }"
+                  @input="handleInput"
+                  @focus="handleFocus"
+                  @blur="handleBlur"
+                  @keypress="handleEnter"
+                />
+              </template>
+            </NAutoComplete>
+            <NButton type="primary" :disabled="buttonDisabled" @click="handleSubmit">
+              <template #icon>
+                <span class="dark:text-black">
+                  <SvgIcon icon="ri:send-plane-fill" />
+                </span>
+              </template>
+            </NButton>
           </div>
-        </NLayoutSider>
-      </NLayout>
-    </NSpace>
-    <footer>
-      <NLayoutFooter :inverted="inverted" bordered>
-        <footer :class="footerClass">
-          <div class="w-full max-w-screen-xl m-auto">
-            <div class="flex items-center justify-between space-x-2">
-              <HoverButton tooltip="清空">
-                <span class="text-xl text-[#4f555e] dark:text-white">
-                  <SvgIcon icon="ri:delete-bin-line" />
-                </span>
-              </HoverButton>
-              <HoverButton v-if="!isMobile" tooltip="导出" @click="handleExport">
-                <span class="text-xl text-[#4f555e] dark:text-white">
-                  <SvgIcon icon="ri:download-2-line" />
-                </span>
-              </HoverButton>
-              <HoverButton v-if="!isMobile" @click="toggleUsingContext">
-                <span class="text-xl" :class="{ 'text-[#6aa1e7]': usingContext, 'text-[#a8071a]': !usingContext }">
-                  <SvgIcon icon="ri:chat-history-line" />
-                </span>
-              </HoverButton>
-              <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
-                <template #default="{ handleInput, handleBlur, handleFocus }">
-                  <NInput
-                    ref="inputRef"
-                    v-model:value="prompt"
-                    type="textarea"
-                    :placeholder="placeholder"
-                    :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }"
-                    @input="handleInput"
-                    @focus="handleFocus"
-                    @blur="handleBlur"
-                    @keypress="handleEnter"
-                  />
-                </template>
-              </NAutoComplete>
-              <NButton type="primary" :disabled="buttonDisabled" @click="handleSubmit">
-                <template #icon>
-                  <span class="dark:text-black">
-                    <SvgIcon icon="ri:send-plane-fill" />
-                  </span>
-                </template>
-              </NButton>
-            </div>
-          </div>
-        </footer>
-      </NLayoutFooter>
-    </footer>
+        </div>
+      </footer>
+    </NLayoutFooter>
   </div>
 </template>
 

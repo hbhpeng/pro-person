@@ -20,6 +20,14 @@ export const useChatStore = defineStore('chat-store', {
         return state.chat.find(item => item.uuid === state.active)?.data ?? []
       }
     },
+
+    // getChatByUutitle(state: Chat.ChatState) {
+    //   return (title?: string) => {
+    //     if (title)
+    //       return state.chat.find(item => item.uuid === title)?.data ?? []
+    //     return []
+    //   }
+    // },
   },
 
   actions: {
